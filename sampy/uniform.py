@@ -1,7 +1,7 @@
 import numpy as np
 
-from .distributions import Continuous
-from .utils import check_array
+from sampy.distributions import Continuous
+from sampy.utils import check_array
 
 
 # class DiscreteUniform(Discrete):

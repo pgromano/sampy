@@ -1,8 +1,9 @@
 import numpy as np
 import scipy.special as sc
 
-from .distributions import Discrete
-from .utils import _handle_zeros_in_scale, check_array
+from sampy.distributions import Discrete
+from sampy.utils import check_array
+from sampy.math import _handle_zeros_in_scale
 
 
 class Poisson(Discrete):

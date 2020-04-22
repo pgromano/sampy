@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.special as sc
 
-from .distributions import Continuous
-from .utils import _handle_zeros_in_scale, check_array
-
+from sampy.distributions import Continuous
+from sampy.utils import check_array
+from sampy.math import _handle_zeros_in_scale, logn
 
 class Normal(Continuous):
 	def __init__(self, center=0, scale=1, seed=None):
