@@ -15,8 +15,8 @@ class Normal(Continuous):
 
 	@classmethod
 	def from_data(self, X, seed=None):
-		n = Normal(seed=seed)
-		return n.fit(X)
+		dist = Normal(seed=seed)
+		return dist.fit(X)
 
 	def fit(self, X):
 		self._reset()
@@ -64,12 +64,6 @@ class Normal(Continuous):
 	def sample(self, *size):
 		return self._state.normal(self.center, self.scale, size=size)
 
-	def quantile(self, *q):
-		# check array for numpy structure
-		q = check_array(q, squeeze=True)
-
-		return self.center + self.scale * sc.erfinv(2 * q - 1) * np.sqrt(2)
-
 	def pdf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
@@ -100,6 +94,12 @@ class Normal(Continuous):
 		X = check_array(X, squeeze=True)
 
 		return self.center + self.scale * sc.erfinv(2 * X - 1) * np.sqrt(2)
+
+	def quantile(self, *q):
+		# check array for numpy structure
+		q = check_array(q, squeeze=True)
+
+		return self.center + self.scale * sc.erfinv(2 * q - 1) * np.sqrt(2)
 
 	@property
 	def mean(self):

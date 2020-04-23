@@ -23,8 +23,8 @@ class Uniform(Continuous):
 
 	@classmethod
 	def from_data(self, X, seed=None):
-		u = Uniform(seed=seed)
-		return u.fit(X)
+		dist = Uniform(seed=seed)
+		return dist.fit(X)
 
 	def fit(self, X):
 		self._reset()

@@ -14,8 +14,8 @@ class Poisson(Discrete):
 
 	@classmethod
 	def from_data(self, X, seed=None):
-		p = Poisson(seed=seed)
-		return p.fit(X)
+		dist = Poisson(seed=seed)
+		return dist.fit(X)
 
 	def fit(self, X):
 		self._reset()
