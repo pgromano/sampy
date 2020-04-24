@@ -33,7 +33,7 @@ class Poisson(Discrete):
 		# Update rate
 		if self.rate is None:
 			self._n_samples += X.shape[0] - np.isnan(X).sum()
-			self.rate = np.mean(X)
+			self.rate = np.nanmean(X)
 		else:
 			# previous values
 			prev_size = self._n_samples
