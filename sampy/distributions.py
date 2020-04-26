@@ -39,11 +39,11 @@ class Distribution:
 		raise NotImplementedError
 
 	def sample(self, *size):
-		if not hassattr(self, '_state'):
+		if not hasattr(self, '_state'):
 			raise ValueError("No random state found in method")
 
-		if not hasattr(self, 'icdf'):
-			raise ValueError("Must define inverse CDF function")
+		if not hasattr(self, 'quantile'):
+			raise ValueError("Must define inverse CDF (quantile) function")
 
 		p = self._state.uniform(0, 1, size=size)
 		return self.quantile(p)
