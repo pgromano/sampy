@@ -59,8 +59,8 @@ class HalfNormal(Continuous):
 		X = check_array(X, squeeze=True)
 
 		norm = np.sqrt(2) / (self.scale * np.sqrt(np.pi))
-		p = norm * np.exp(-X ** 2 / (2 * self.variance))
-		return np.where(X >= 0, p, 0)
+		p = norm * np.exp(-X ** 2 / (2 * self.scale ** 2))
+		return np.where(X > 0, p, 0)
 
 	def log_pdf(self, *X):
 		# check array for numpy structure
