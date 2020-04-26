@@ -54,12 +54,6 @@ class Uniform(Continuous):
 	def sample(self, *size):
 		return self._state.uniform(self.low, self.high, size=size)
 
-	def quantile(self, *q):
-		# check array for numpy structure
-		q = check_array(q, squeeze=True)
-
-		return self.low + q * (self.high - self.low)
-
 	def pdf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
@@ -86,11 +80,11 @@ class Uniform(Continuous):
 
 		return np.log(self.cdf(X))
 
-	def icdf(self, *X):
+	def quantile(self, *q):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
-		
-		return X * (self.high - self.low) + self.low
+		q = check_array(q, squeeze=True)
+
+		return self.low + q * (self.high - self.low)
 
 	def entropy(self):
 		return np.log(self.high - self.low)

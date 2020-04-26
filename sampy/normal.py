@@ -89,12 +89,6 @@ class Normal(Continuous):
 
 		return np.log(self.cdf(X))
 
-	def icdf(self, *X):
-		# check array for numpy structure
-		X = check_array(X, squeeze=True)
-
-		return self.center + self.scale * sc.erfinv(2 * X - 1) * np.sqrt(2)
-
 	def quantile(self, *q):
 		# check array for numpy structure
 		q = check_array(q, squeeze=True)

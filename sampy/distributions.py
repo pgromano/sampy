@@ -46,7 +46,7 @@ class Distribution:
 			raise ValueError("Must define inverse CDF function")
 
 		p = self._state.uniform(0, 1, size=size)
-		return self.icdf(p)
+		return self.quantile(p)
 
 	def _set_random_state(self, seed):
 		if isinstance(seed, np.random.RandomState):
@@ -75,9 +75,6 @@ class Discrete(Distribution):
 	def log_cdf(self, X):
 		raise NotImplementedError
 
-	def icdf(self, X):
-		raise NotImplementedError
-
 	def quantile(self, q):
 		raise NotImplementedError
 
@@ -94,9 +91,6 @@ class Continuous(Distribution):
 		raise NotImplementedError
 
 	def log_cdf(self, X):
-		raise NotImplementedError
-
-	def icdf(self, X):
 		raise NotImplementedError
 
 	def quantile(self, q):

@@ -55,15 +55,6 @@ class Poisson(Discrete):
 	def sample(self, *size):
 		return self._state.poisson(self.rate, size=size)
 
-	def quantile(self, *q):
-		# check array for numpy structure
-		q = check_array(q, squeeze=True)
-
-		vals = np.ceil(sc.pdtrik(q, self.rate))
-		vals1 = np.maximum(vals - 1, 0)
-		temp = sc.pdtr(vals1, self.rate)
-		return np.where(temp >= q, vals1, vals)
-
 	def pmf(self, *X):
 
 		return np.exp(self.log_pmf(X))
@@ -82,6 +73,15 @@ class Poisson(Discrete):
 
 	def log_cdf(self, *X):
 		return np.log(self.cdf(X))
+
+	def quantile(self, *q):
+		# check array for numpy structure
+		q = check_array(q, squeeze=True)
+
+		vals = np.ceil(sc.pdtrik(q, self.rate))
+		vals1 = np.maximum(vals - 1, 0)
+		temp = sc.pdtr(vals1, self.rate)
+		return np.where(temp >= q, vals1, vals)
 
 	@property
 	def mean(self):
