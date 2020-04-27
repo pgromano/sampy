@@ -30,19 +30,19 @@ class Interval:
 
 	def __lt__(self, val):
 		if self.left_inclusive:
-			return val < self.low
-		return val <= self.low
+			return val.__gt__(self.low)
+		return val.__ge__(self.low)
 
 	def __le__(self, val):
-		return val < self or val in self
+		return val.__gt__(self.high) or val in self
 
 	def __gt__(self, val):
 		if self.right_inclusive:
-			return val > self.high
-		return val >= self.high
+			return val.__lt__(self.high)
+		return val.__le__(self.high)
 
 	def __ge__(self, val):
-		return val > self or val in self
+		return val.__lt__(self.low) or val in self
 
 	def __contains__(self, val):
 		if self.left_inclusive and self.right_inclusive:
@@ -62,7 +62,7 @@ class Interval:
 		# define left bracket (lb)
 		if self.left_inclusive:
 			lb = '['
-		else: 
+		else:
 			lb = '('
 
 		# define right bracket (rb)
