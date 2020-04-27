@@ -115,6 +115,10 @@ class Poisson(Discrete):
 	def perplexity(self):
 		return np.nan
 
+	@property
+	def support(self):
+		return Interval(0, np.inf, True, False)
+
 	def _reset(self):
 		if hasattr(self, '_n_samples'):
 			del self._n_samples

@@ -116,6 +116,10 @@ class Uniform(Continuous):
 	def kurtosis(self):
 		return -6 / 5
 
+	@property
+	def support(self):
+		return Interval(self.low, self.high, True, True)
+
 	def _reset(self):
 		if hasattr(self, '_center'):
 			del self._center

@@ -125,6 +125,10 @@ class Normal(Continuous):
 	def perplexity(self):
 		return np.exp(self.entropy)
 
+	@property
+	def support(self):
+		return Interval(-np.inf, np.inf, False, False)
+
 	def _reset(self):
 		if hasattr(self, '_n_samples'):
 			del self._n_samples
