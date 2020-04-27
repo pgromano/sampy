@@ -9,7 +9,6 @@ from sampy.math import _handle_zeros_in_scale, logn
 class HalfNormal(Continuous):
 	def __init__(self, scale=1, seed=None):
 		self.scale = scale
-		self._variance = scale ** 2 * (1 - 2 / np.pi)
 		self.seed = seed
 		self._state = self._set_random_state(seed)
 
@@ -32,13 +31,13 @@ class HalfNormal(Continuous):
 			self._n_samples = 0
 
 		# Update center and variance
-		if self._variance is None:
+		if self._empirical_variance is None:
 			self._n_samples += X.shape[0] - np.isnan(X).sum()
-			self._variance = np.var(X)
+			self._empirical_variance = np.nanvar(X)
 		else:
 			# previous values
 			prev_size = self._n_samples
-			prev_variance = self._variance
+			prev_variance = self._empirical_variance
 
 			# new values
 			curr_size = X.shape[0] - np.isnan(X).sum()
@@ -48,11 +47,13 @@ class HalfNormal(Continuous):
 			self._n_samples = prev_size + curr_size
 
 			# update variance
-			self._variance = ((prev_variance * prev_size) +
+			self._empirical_variance = ((prev_variance * prev_size) +
                             (curr_variance * curr_size)) / self._n_samples
 
 		norm = (1 - (2 / np.pi))
-		self.scale = _handle_zeros_in_scale(np.sqrt(self._variance / norm))
+		self.scale = _handle_zeros_in_scale(
+			np.sqrt(self._empirical_variance / norm)
+		)
 		return self
 
 	def pdf(self, *X):
@@ -93,7 +94,7 @@ class HalfNormal(Continuous):
 
 	@property
 	def median(self):
-		return self.scale * np.sqrt(sc.erfinv(0.5))
+		return self.scale * np.sqrt(2) * sc.erfinv(0.5)
 
 	@property
 	def mode(self):
@@ -121,7 +122,7 @@ class HalfNormal(Continuous):
 		if hasattr(self, '_n_samples'):
 			del self._n_samples
 		self.scale = None
-		self._variance = None
+		self._empirical_variance = None
 
 	def __str__(self):
 		return f"HalfNormal(scale={self.scale})"
