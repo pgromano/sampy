@@ -2,7 +2,7 @@ import numpy as np
 import scipy.special as sc
 
 from sampy.distributions import Discrete
-from sampy.utils import check_array
+from sampy.utils import check_array, Interval
 from sampy.math import _handle_zeros_in_scale
 
 
@@ -55,7 +55,7 @@ class Bernoulli(Discrete):
 	def sample(self, *size):
 		return self._state.binomial(1, self.bias, size=size)
 
-	def pmf(self, X):
+	def pmf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
 
@@ -64,13 +64,13 @@ class Bernoulli(Discrete):
 		out[X == 1] = self.bias
 		return out
 
-	def log_pmf(self, X):
+	def log_pmf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
 
 		return np.log(self.pmf(X))
 
-	def cdf(self, X):
+	def cdf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
 
@@ -85,11 +85,12 @@ class Bernoulli(Discrete):
 
 		return np.log(self.cdf(X))
 
-	def icdf(self, X):
-		raise NotImplementedError
+	def quantile(self, *q):
+		# check array for numpy structure
+		q = check_array(q, squeeze=True)
 
-	def quantile(self, q):
-		raise NotImplementedError
+		out = np.ceil(sc.bdtrik(q, 1, self.bias))
+		return np.where(self.bias >= q, 0, out)
 
 	@property
 	def mean(self):
@@ -127,6 +128,10 @@ class Bernoulli(Discrete):
 
 	def perplexity(self):
 		return np.exp(self.entropy())
+
+	@property
+	def support(self):
+		return Interval(0, 1, True, True)
 
 	def _reset(self):
 		if hasattr(self, '_n_samples'):
