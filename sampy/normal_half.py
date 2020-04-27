@@ -51,7 +51,8 @@ class HalfNormal(Continuous):
 			self._variance = ((prev_variance * prev_size) +
                             (curr_variance * curr_size)) / self._n_samples
 
-		self.scale = _handle_zeros_in_scale(np.sqrt(self.variance / (1 - 2 / np.pi)))
+		norm = (1 - (2 / np.pi))
+		self.scale = _handle_zeros_in_scale(np.sqrt(self._variance / norm))
 		return self
 
 	def pdf(self, *X):
@@ -100,7 +101,7 @@ class HalfNormal(Continuous):
 
 	@property
 	def variance(self):
-		return self.scale * (1 - 2 / np.pi)
+		return (self.scale ** 2) * (1 - (2 / np.pi))
 
 	@property
 	def skewness(self):
@@ -123,7 +124,7 @@ class HalfNormal(Continuous):
 		self._variance = None
 
 	def __str__(self):
-		return f"HalfNormal(center={self.center}, scale={self.scale})"
+		return f"HalfNormal(scale={self.scale})"
 
 	def __repr__(self):
 		return self.__str__()
