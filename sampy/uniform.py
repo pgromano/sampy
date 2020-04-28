@@ -4,15 +4,6 @@ from sampy.distributions import Continuous
 from sampy.utils import check_array
 
 
-# class DiscreteUniform(Discrete):
-# 	def __init__(self, low=0, high=1, seed=None):
-# 		self.low = low
-# 		self.high = high
-# 		self._center = 0.5 * (self.high - self.low) + self.low
-# 		self.seed = seed
-# 		self._state = self._set_random_state(seed)
-
-
 class Uniform(Continuous):
 	def __init__(self, low=0, high=1, seed=None):
 		self.low = low
