@@ -17,7 +17,29 @@ def check_array(X, squeeze=False):
 
 
 class Interval:
-	def __init__(self, low, high, left_inclusive=True, right_inclusive=True):
+	""" Interval
+
+	Defines a range from low to high with inclusive or exclusive bounds. Useful
+	for evaluating the support of distributions.
+
+	Arguments
+	---------
+	low: numeric
+		The lower bound of the interval
+	high: numeric
+		The upper bound of the interval
+	left: bool (Default: True)
+		Whether or not the lower bounds of the interval should be treated
+		inclusively. If `low = 0` and `left = True` then 0 would be within the
+		interval. If however `left = False` then 0 would fall outside the bound
+		but an infinitely small (within computer precision) value greter would 
+		be within bounds.
+	right: bool (Default: True)
+		Whether or not the upper bounds of the interval should be treated
+		inclusively. Similar caveats as `left`.
+	"""
+	
+	def __init__(self, low, high, left=True, right=True):
 		if low > high:
 			raise ValueError("Interval low must be lesser than high")
 		if low == high:
@@ -25,11 +47,11 @@ class Interval:
 
 		self.low = low
 		self.high = high
-		self.left_inclusive = left_inclusive
-		self.right_inclusive = right_inclusive
+		self.left = left
+		self.right = right
 
 	def __lt__(self, val):
-		if self.left_inclusive:
+		if self.left:
 			return val.__gt__(self.low)
 		return val.__ge__(self.low)
 
@@ -37,7 +59,7 @@ class Interval:
 		return val.__gt__(self.high) or val in self
 
 	def __gt__(self, val):
-		if self.right_inclusive:
+		if self.right:
 			return val.__lt__(self.high)
 		return val.__le__(self.high)
 
@@ -45,14 +67,15 @@ class Interval:
 		return val.__lt__(self.low) or val in self
 
 	def __contains__(self, val):
-		if self.left_inclusive and self.right_inclusive:
-			return val >= self.low and val <= self.high
-		elif self.left_inclusive and not self.right_inclusive:
-			return val >= self.low and val < self.high
-		elif not self.left_inclusive and self.right_inclusive:
-			return val > self.low and val <= self.high
-		elif not self.left_inclusive and not self.right_inclusive:
-			return val > self.low and val < self.high
+
+		if self.left and self.right:
+			return self.low <= val <= self.high
+		elif self.left and not self.right:
+			return self.low <= val < self.high
+		elif not self.left and self.right:
+			return self.low < val <= self.high
+		elif not self.left and not self.right:
+			return self.low < val < self.high
 
 	@property
 	def __name__(self):
@@ -60,13 +83,13 @@ class Interval:
 
 	def __str__(self):
 		# define left bracket (lb)
-		if self.left_inclusive:
+		if self.left:
 			lb = '['
 		else:
 			lb = '('
 
 		# define right bracket (rb)
-		if self.right_inclusive:
+		if self.right:
 			rb = ']'
 		else:
 			rb = ')'
