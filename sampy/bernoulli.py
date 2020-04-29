@@ -7,6 +7,28 @@ from sampy.math import _handle_zeros_in_scale
 
 
 class Bernoulli(Discrete):
+	""" Bernoulli Distribution
+
+	Also known as the coin-flip or yes-no distribution, this distribution 
+	describes the likelihood of a single trial returning with a positive (heads
+	or yes) value with a given probability (or bias). This is a specific case
+	of the more general Binomial distribution.
+
+	Parameters
+	----------
+	bias : float, optional
+		The bias or the likelihood of a positive event, by default 0.5. 
+		The values within this method assume that negative class will be 0
+		and positive class 1. 
+	seed : int, str or None, optional
+		The seed by which to set the random number generator for the 
+		`sample` method, by default None. A seed set to None will use the
+		default clock time (see numpy.random.RandomState for more details)
+		and an integer will set the seed directly. Strings will be hashed to an
+		integer representation which can be a helpful description of the 
+		distribution use or associated experiment. 
+	"""
+
 	def __init__(self, bias=0.5, seed=None):
 		self.bias = bias
 		self.seed = seed
