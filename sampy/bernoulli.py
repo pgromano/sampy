@@ -2,7 +2,8 @@ import numpy as np
 import scipy.special as sc
 
 from sampy.distributions import Discrete
-from sampy.utils import check_array, Interval
+from sampy.interval import Interval
+from sampy.utils import check_array
 from sampy.math import _handle_zeros_in_scale
 
 
@@ -47,6 +48,8 @@ class Bernoulli(Discrete):
 
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
+
+		# convert values outside of support
 
 		# first fit
 		if not hasattr(self, '_n_samples'):

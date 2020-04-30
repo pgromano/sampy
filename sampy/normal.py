@@ -2,6 +2,7 @@ import numpy as np
 import scipy.special as sc
 
 from sampy.distributions import Continuous
+from sampy.interval import Interval
 from sampy.utils import check_array
 from sampy.math import _handle_zeros_in_scale, logn
 
