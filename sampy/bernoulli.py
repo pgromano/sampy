@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import scipy.special as sc
 
@@ -28,16 +29,25 @@ class Bernoulli(Discrete):
 		and an integer will set the seed directly. Strings will be hashed to an
 		integer representation which can be a helpful description of the 
 		distribution use or associated experiment. 
+	invalid : str, {'error', 'warn', 'ignore'}
+		How the fit method should handle out of domain errors or other invalid
+		values. On 'error' the method will return ValueError and end. On 'warn'
+		a warning will notify the user of the issue and actions taken to 
+		mitigate. On 'ignore' the user is neither informed nor does the code
+		error out, proceed with caution.
 	"""
 
-	def __init__(self, bias=0.5, seed=None):
+	def __init__(self, bias=0.5, invalid='error', seed=None):
 		self.bias = bias
 		self.seed = seed
+		if invalid not in {'error', 'warn', 'ignore'}:
+			raise ValueError(f"Unable to interpret `invalid = {invalid}`")
+		self.invalid = invalid
 		self._state = self._set_random_state(seed)
 
 	@classmethod
-	def from_data(self, X, seed=None):
-		dist = Bernoulli(seed=seed)
+	def from_data(self, X, invalid='error', seed=None):
+		dist = Bernoulli(invalid=invalid, seed=seed)
 		return dist.fit(X)
 
 	def fit(self, X):
@@ -47,10 +57,29 @@ class Bernoulli(Discrete):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True).astype(float)
+		X = check_array(X, squeeze=True)
+		if X.dtype != int:
+			if self.invalid == 'error':
+				raise ValueError(
+					"Bernoulli distribution must be dtype intbut found {X.dtype}"
+				)
+			elif self.invalid == 'warn':
+				warnings.warn(
+					f"Bernoulli distribution should be dtype int but found {X.dtype}. Attempting to cast to int",
+					category=UserWarning,
+				)
+		X = X.astype(float)
 
 		# identify values outside of support
 		invalid = (1 - self.support.contains(X)).astype(bool)
+		if np.sum(invalid) > 0:
+			if self.invalid == 'error':
+				raise ValueError("Bernoulli must be 0 or 1 values only")
+			elif self.invalid == 'warn':
+				warnings.warn(
+					f"Training data outside support {self.support}. Will train ignoring values outside domain",
+					category=UserWarning,
+				)
 		X[invalid] = np.nan
 
 		# first fit
