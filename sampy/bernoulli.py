@@ -47,9 +47,11 @@ class Bernoulli(Discrete):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, squeeze=True).astype(float)
 
-		# convert values outside of support
+		# identify values outside of support
+		invalid = (1 - self.support.contains(X)).astype(bool)
+		X[invalid] = np.nan
 
 		# first fit
 		if not hasattr(self, '_n_samples'):
