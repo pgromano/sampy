@@ -160,10 +160,7 @@ class Bernoulli(Discrete):
 		
 	@property
 	def mode(self):
-		if self.bias == 0.5:
-			return np.nan
-		return np.round(self.bias)
-
+		return self.median
 	@property
 	def variance(self):
 		return self.bias * (1 - self.bias)

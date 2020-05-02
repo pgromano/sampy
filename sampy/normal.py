@@ -106,7 +106,7 @@ class Normal(Continuous):
 
 	@property
 	def mode(self):
-		return self.center
+		return self.median
 
 	@property
 	def variance(self):
