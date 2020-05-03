@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from sampy.utils import set_random_state
 
 
 class Distribution:
@@ -49,13 +50,7 @@ class Distribution:
 		return self.quantile(p)
 
 	def _set_random_state(self, seed):
-		if isinstance(seed, np.random.RandomState):
-			return seed
-
-		if isinstance(seed, str):
-			seed = hash(seed) & ((1 << 32) - 1)
-
-		return np.random.RandomState(seed)
+		return set_random_state(seed)
 
 	def __call__(self, *size):
 		return self.sample(*size)

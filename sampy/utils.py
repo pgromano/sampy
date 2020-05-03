@@ -29,3 +29,13 @@ def check_array(X, squeeze=False):
 		if squeeze:
 			return np.squeeze(X)
 		return np.asarray(X)
+
+
+def set_random_state(self, seed=None):
+	if isinstance(seed, np.random.RandomState):
+		return seed
+
+	if isinstance(seed, str):
+		seed = hash(seed) & ((1 << 32) - 1)
+
+	return np.random.RandomState(seed)
