@@ -37,21 +37,19 @@ class Exponential(Continuous):
 		else:
 			# previous values
 			prev_size = self._n_samples
-			prev_rate = 1 / self.rate
+			prev_mean = 1 / self.rate
 
 			# new values
 			curr_size = X.shape[0] - np.isnan(X).sum()
-			curr_rate = np.nanmean(X)
+			curr_mean = np.nanmean(X)
 
 			# update size
 			self._n_samples = prev_size + curr_size
 
 			# update rate
-			self.rate = 1 / (
-				(
-					(prev_rate * prev_size) + (curr_rate * curr_size)
-				) / self._n_samples
-			)
+			updated_mean = ((prev_mean * prev_size) + \
+				(curr_mean * curr_size)) / self._n_samples
+			self.rate = 1 / updated_mean
 
 		return self
 
