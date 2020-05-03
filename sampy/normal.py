@@ -35,8 +35,8 @@ class Normal(Continuous):
 		# Update center and variance
 		if self.center is None and self._variance is None:
 			self._n_samples += X.shape[0] - np.isnan(X).sum()
-			self.center = np.mean(X)
-			self._variance = np.var(X)
+			self.center = np.nanmean(X)
+			self._variance = np.nanvar(X)
 		else:
 			# previous values
 			prev_size = self._n_samples
