@@ -153,12 +153,14 @@ class Binomial(Discrete):
 		n, p, q = self.n_trials, self.bias, 1 - self.bias
 		return (1 - (6 * p * q)) / (n * p * q)
 
+	@property
 	def entropy(self):
 		n, p, q = self.n_trials, self.bias, 1 - self.bias
 		return 0.5 * logn(2 * np.pi * np.exp(1) * n * p * q, 2)
 
+	@property
 	def perplexity(self):
-		return np.exp(self.entropy())
+		return np.exp(self.entropy)
 
 	@property
 	def support(self):

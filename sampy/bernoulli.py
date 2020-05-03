@@ -175,12 +175,14 @@ class Bernoulli(Discrete):
 		p, q = self.bias, 1 - self.bias
 		return (1 - 6 * p * q) / (p * q)
 
+	@property
 	def entropy(self):
 		p, q = self.bias, 1 - self.bias
 		return -q * np.log(q) - p * np.log(p)
 
+	@property
 	def perplexity(self):
-		return np.exp(self.entropy())
+		return np.exp(self.entropy)
 
 	@property
 	def support(self):

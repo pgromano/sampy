@@ -113,9 +113,11 @@ class HalfNormal(Continuous):
 	def kurtosis(self):
 		return (8 * (np.pi - 3)) / np.pow(np.pi - 2, 2)
 
+	@property
 	def entropy(self):
 		return 0.5 * np.log((np.pi * self.scale ** 2) / 2) + 0.5
 
+	@property
 	def perplexity(self):
 		return np.exp(self.entropy)
 

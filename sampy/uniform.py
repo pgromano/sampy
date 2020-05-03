@@ -120,6 +120,14 @@ class Uniform(Continuous):
 		if self.right_inclusive:
 			return Interval(self.low, self.high, True, True)
 		return Interval(self.low, self.high, True, False)
+		
+	@property
+	def entropy(self):
+		return np.log(self.high - self.low)
+
+	@property
+	def perplexity(self):
+		return np.exp(self.entropy)
 
 	def _reset(self):
 		if hasattr(self, '_center'):

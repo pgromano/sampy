@@ -120,9 +120,11 @@ class Normal(Continuous):
 	def kurtosis(self):
 		return 0
 
+	@property
 	def entropy(self):
 		return 0.5 + 0.5 * np.log(2 * np.pi) + np.log(self.scale)
 
+	@property
 	def perplexity(self):
 		return np.exp(self.entropy)
 
