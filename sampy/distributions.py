@@ -55,6 +55,12 @@ class Distribution:
 	def __call__(self, *size):
 		return self.sample(*size)
 
+	def __lt__(self, X):
+		return 1 - self.cdf(X)
+
+	def __gt__(self, X):
+		return self.cdf(X)
+
 
 class Discrete(Distribution):
 	""" Base Discrete Distribution Class """
