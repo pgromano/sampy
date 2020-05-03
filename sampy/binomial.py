@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.special as sc
+import warnings
 
 from sampy.distributions import Discrete
 from sampy.interval import Interval
@@ -9,6 +10,20 @@ from sampy.math import logn, _handle_zeros_in_scale
 
 class Binomial(Discrete):
 	def __init__(self, n_trials=1, bias=0.5, seed=None):
+
+		# safety check n_trials
+		if (n_trials, float):
+			warning.warn("Number of trials should be an integer. Casting to int")
+
+		if np.round(n_trials).astype(int) != n_trials:
+			raise ValueError("Number of trials must be an integer value")
+		else:
+			n_trials = np.round(n_trials).astype(int)
+
+		# safety check bias
+		if bias < 0 or bias > 1:
+			raise ValueError("Bias must be between [0, 1]")
+
 		self.n_trials = n_trials
 		self.bias = bias
 		self.seed = seed
@@ -20,17 +35,52 @@ class Binomial(Discrete):
 		return dist.fit(X)
 
 	def fit(self, X):
-		raise NotImplementedError
+		self._reset()
+		return self.partial_fit(X)
 
 	def partial_fit(self, X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True).astype(float)
 
-		# identify values outside of support
-		invalid = (1 - self.support.contains(X)).astype(bool)
+		# identify values outside of support 
+		# NOTE: we don't know the "true" upper bounds so we only
+		# check that values are positive
+		invalid = X < 0
 		X[invalid] = np.nan
 
-		raise NotImplementedError
+		# first fit
+		if not hasattr(self, '_n_samples'):
+			self._n_samples = 0
+
+		if self._mean is None and self._variance is None:
+			self._n_samples += X.shape[0] - np.isnan(X).sum()
+			self._mean = np.nanmean(X)
+			self._variance = np.nanvar(X)
+		else:
+			# previous values
+			prev_size = self._n_samples
+			prev_mean = self._mean
+			prev_variance = self._variance
+
+			# new values
+			curr_size = X.shape[0] - np.isnan(X).sum()
+			curr_mean = np.nanmean(X)
+			curr_variance = np.nanvar(X)
+
+			# update size
+			self._n_samples = prev_size + curr_size
+
+			# update mean
+			self._mean = ((prev_mean * prev_size) + \
+				(curr_mean * curr_size)) / self._n_samples
+
+			# update variance
+			self._variance = ((prev_variance * prev_size) + \
+				(curr_variance * curr_size)) / self._n_samples
+
+		self.bias = 1 - (self._variance / self._mean)
+		self.n_trials = np.round(self._mean / self.bias).astype(int)
+		return self
 
 	def sample(self, *size):
 		return self._state.binomial(self.n_trials, self.bias, size=size)
@@ -117,7 +167,10 @@ class Binomial(Discrete):
 	def _reset(self):
 		if hasattr(self, '_n_samples'):
 			del self._n_samples
-		self.rate = None
+		self.n_trials = None
+		self.bias = None
+		self._mean = None
+		self._variance = None
 
 	def __str__(self):
 		return f"Binomial(n_trials={self.n_trials}, bias={self.bias})"
