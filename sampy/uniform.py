@@ -5,9 +5,10 @@ from sampy.utils import check_array
 
 
 class Uniform(Continuous):
-	def __init__(self, low=0, high=1, seed=None):
+	def __init__(self, low=0, high=1, right_inclusive=False, seed=None):
 		self.low = low
 		self.high = high
+		self.right_inclusive = right_inclusive
 		self._center = 0.5 * (self.high - self.low) + self.low
 		self.seed = seed
 		self._state = self._set_random_state(seed)
@@ -43,14 +44,21 @@ class Uniform(Continuous):
 		return self
 
 	def sample(self, *size):
-		return self._state.uniform(self.low, self.high, size=size)
+		Xs = self._state.uniform(self.low, self.high, size=size)
+		if self.right_inclusive:
+			decimals = 15 if Xs.dtype == 'float64' else 8
+			Xs = np.round(Xs, decimals)
+		return Xs
 
 	def pdf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
 
 		lb = self.low <= X
-		ub = self.high > X
+		if self.right_inclusive:
+			ub = self.high >= X
+		else:
+			ub = self.high > X
 		return (lb * ub) / (self.high - self.low)
 
 	def log_pdf(self, *X):
@@ -109,7 +117,9 @@ class Uniform(Continuous):
 
 	@property
 	def support(self):
-		return Interval(self.low, self.high, True, True)
+		if self.right_inclusive:
+			return Interval(self.low, self.high, True, True)
+		return Interval(self.low, self.high, True, False)
 
 	def _reset(self):
 		if hasattr(self, '_center'):
