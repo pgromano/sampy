@@ -1,4 +1,5 @@
 from .bernoulli import Bernoulli
+from .beta import Beta
 from .binomial import Binomial
 from .exponential import Exponential
 from .normal import Normal
