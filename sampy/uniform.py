@@ -9,9 +9,9 @@ class Uniform(Continuous):
 		self.low = low
 		self.high = high
 		self.right_inclusive = right_inclusive
-		self._center = 0.5 * (self.high - self.low) + self.low
 		self.seed = seed
 		self._state = self._set_random_state(seed)
+		self._center = 0.5 * (self.high - self.low) + self.low
 
 	@classmethod
 	def from_data(self, X, seed=None):
@@ -66,7 +66,10 @@ class Uniform(Continuous):
 		X = check_array(X, squeeze=True)
 
 		lb = self.low <= X 
-		ub = self.high > X
+		if self.right_inclusive:
+			ub = self.high >= X
+		else:
+			ub = self.high > X
 		return np.log(lb * ub) - np.log(self.high - self.low)
 
 	def cdf(self, *X):
@@ -114,12 +117,6 @@ class Uniform(Continuous):
 	@property
 	def kurtosis(self):
 		return -6 / 5
-
-	@property
-	def support(self):
-		if self.right_inclusive:
-			return Interval(self.low, self.high, True, True)
-		return Interval(self.low, self.high, True, False)
 		
 	@property
 	def entropy(self):
@@ -128,6 +125,12 @@ class Uniform(Continuous):
 	@property
 	def perplexity(self):
 		return np.exp(self.entropy)
+
+	@property
+	def support(self):
+		if self.right_inclusive:
+			return Interval(self.low, self.high, True, True)
+		return Interval(self.low, self.high, True, False)
 
 	def _reset(self):
 		if hasattr(self, '_center'):
