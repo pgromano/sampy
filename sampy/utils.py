@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 
-def check_array(X, squeeze=False):
+def check_array(X, squeeze=False, dtype=None):
 	"""[summary]
 
 	Parameters
@@ -24,11 +24,19 @@ def check_array(X, squeeze=False):
 		The cleaned data as a numpy.ndarray
 	"""
 	try:
-		return np.asscalar(X)
+		X = np.asscalar(X)
+		if dtype is None:
+			return X
+		return X.astype(dtype)
 	except:
 		if squeeze:
-			return np.squeeze(X)
-		return np.asarray(X)
+			X = np.squeeze(X)
+		else:
+			X = np.asarray(X)
+		
+		if dtype is None:
+			return X
+		return X.astype(dtype)
 
 
 def set_random_state(self, seed=None):
