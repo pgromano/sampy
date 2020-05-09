@@ -6,7 +6,25 @@ from sampy.utils import check_array
 
 
 class DiscreteUniform(Discrete):
-	def __init__(self, low=0, high=1, upper_inclusive=False, seed=None):
+	def __init__(self, low=0, high=1, upper_inclusive=True, seed=None):
+
+		if upper_inclusive:
+			if low > high:
+				err = f"High must be greater than low: {low} ≮ {high}"
+				raise ValueError(err)
+			elif low == high:
+				err = f"Lower and upper bounds cannot be equal: {low} = {high}"
+				raise ValueError(err)
+		else:
+			caveat = "\nHalf interval distribution (upper_inclusive = False) "
+			caveat += "shifts upper bound (high - 1) in comparison to low."
+			if low > high - 1:
+				err = f"High must be greater than low: {low} ≮ {high} - 1"
+				raise ValueError(err + caveat)
+			elif low == high - 1:
+				err = f"Lower and upper bounds cannot be equal: {low} = {high} - 1"
+				raise ValueError(err + caveat)
+
 		self.low = low
 		self.high = high
 		self.upper_inclusive = upper_inclusive
@@ -14,8 +32,8 @@ class DiscreteUniform(Discrete):
 		self._state = self._set_random_state(seed)
 
 	@classmethod
-	def from_data(self, X, seed=None):
-		dist = Uniform(seed=seed)
+	def from_data(self, X, upper_inclusive=False, seed=None):
+		dist = DiscreteUniform(upper_inclusive=upper_inclusive, seed=seed)
 		return dist.fit(X)
 
 	def fit(self, X):
@@ -30,7 +48,7 @@ class DiscreteUniform(Discrete):
 		# First fit
 		if self.low is None and self.high is None:
 			self.low = np.nanmin(X)
-			self.high = np.nanmax(X)
+			self.high = np.nanmax(X) + (1 - self.upper_inclusive)
 		else:
 			# Update distribution support
 			curr_low, curr_high = np.nanmin(X), np.nanmax(X)
@@ -38,7 +56,7 @@ class DiscreteUniform(Discrete):
 				self.low = curr_low
 
 			if curr_high > self.high:
-				self.high = curr_high
+				self.high = curr_high + (1 - self.upper_inclusive)
 
 		return self
 

@@ -5,13 +5,20 @@ from sampy.utils import check_array
 
 
 class Uniform(Continuous):
-	def __init__(self, low=0, high=1, right_inclusive=False, seed=None):
+	def __init__(self, low=0, high=1, upper_inclusive=True, seed=None):
+
+		if low > high:
+			err = f"Upper bounds (high) must be greater than low: {low} ≮ {high}"
+			raise ValueError(err)
+		elif low == high:
+			err = f"Lower and upper bounds cannot be equal: {low} = {high}"
+			raise ValueError(err)
+		
 		self.low = low
 		self.high = high
-		self.right_inclusive = right_inclusive
+		self.upper_inclusive = upper_inclusive
 		self.seed = seed
 		self._state = self._set_random_state(seed)
-		self._center = 0.5 * (self.high - self.low) + self.low
 
 	@classmethod
 	def from_data(self, X, seed=None):
@@ -40,22 +47,22 @@ class Uniform(Continuous):
 			if curr_high > self.high:
 				self.high = curr_high
 
-		self._center = 0.5 * (self.high - self.low) + self.low
 		return self
 
 	def sample(self, *size):
-		Xs = self._state.uniform(self.low, self.high, size=size)
-		if self.right_inclusive:
-			decimals = 15 if Xs.dtype == 'float64' else 8
-			Xs = np.round(Xs, decimals)
-		return Xs
+		""" Sample from Distribution
+
+		Note: upper bounds of 1 is so improbable it's more an issue of float 
+		precision. User can cast to float32 for actual sampling of 1.
+		"""
+		return self._state.uniform(self.low, self.high, size=size)
 
 	def pdf(self, *X):
 		# check array for numpy structure
 		X = check_array(X, squeeze=True)
 
 		lb = self.low <= X
-		if self.right_inclusive:
+		if self.upper_inclusive:
 			ub = self.high >= X
 		else:
 			ub = self.high > X
@@ -66,7 +73,7 @@ class Uniform(Continuous):
 		X = check_array(X, squeeze=True)
 
 		lb = self.low <= X 
-		if self.right_inclusive:
+		if self.upper_inclusive:
 			ub = self.high >= X
 		else:
 			ub = self.high > X
@@ -96,11 +103,11 @@ class Uniform(Continuous):
 
 	@property
 	def mean(self):
-		return self._center
+		return 0.5 * (self.high - self.low) + self.low
 
 	@property
 	def median(self):
-		return self._center
+		return 0.5 * (self.high - self.low) + self.low
 
 	@property
 	def mode(self):
@@ -128,13 +135,11 @@ class Uniform(Continuous):
 
 	@property
 	def support(self):
-		if self.right_inclusive:
+		if self.upper_inclusive:
 			return Interval(self.low, self.high, True, True)
 		return Interval(self.low, self.high, True, False)
 
 	def _reset(self):
-		if hasattr(self, '_center'):
-			del self._center
 		self.low = None
 		self.high = None
 
