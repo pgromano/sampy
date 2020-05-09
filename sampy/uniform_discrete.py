@@ -6,9 +6,9 @@ from sampy.utils import check_array
 
 
 class DiscreteUniform(Discrete):
-	def __init__(self, low=0, high=1, upper_inclusive=True, seed=None):
+	def __init__(self, low=0, high=1, high_inclusive=True, seed=None):
 
-		if upper_inclusive:
+		if high_inclusive:
 			if low > high:
 				err = f"High must be greater than low: {low} ≮ {high}"
 				raise ValueError(err)
@@ -16,7 +16,7 @@ class DiscreteUniform(Discrete):
 				err = f"Lower and upper bounds cannot be equal: {low} = {high}"
 				raise ValueError(err)
 		else:
-			caveat = "\nHalf interval distribution (upper_inclusive = False) "
+			caveat = "\nHalf interval distribution (high_inclusive = False) "
 			caveat += "shifts upper bound (high - 1) in comparison to low."
 			if low > high - 1:
 				err = f"High must be greater than low: {low} ≮ {high} - 1"
@@ -27,13 +27,13 @@ class DiscreteUniform(Discrete):
 
 		self.low = low
 		self.high = high
-		self.upper_inclusive = upper_inclusive
+		self.high_inclusive = high_inclusive
 		self.seed = seed
 		self._state = self._set_random_state(seed)
 
 	@classmethod
-	def from_data(self, X, upper_inclusive=False, seed=None):
-		dist = DiscreteUniform(upper_inclusive=upper_inclusive, seed=seed)
+	def from_data(self, X, high_inclusive=False, seed=None):
+		dist = DiscreteUniform(high_inclusive=high_inclusive, seed=seed)
 		return dist.fit(X)
 
 	def fit(self, X):
@@ -48,7 +48,7 @@ class DiscreteUniform(Discrete):
 		# First fit
 		if self.low is None and self.high is None:
 			self.low = np.nanmin(X)
-			self.high = np.nanmax(X) + (1 - self.upper_inclusive)
+			self.high = np.nanmax(X) + (1 - self.high_inclusive)
 		else:
 			# Update distribution support
 			curr_low, curr_high = np.nanmin(X), np.nanmax(X)
@@ -56,12 +56,12 @@ class DiscreteUniform(Discrete):
 				self.low = curr_low
 
 			if curr_high > self.high:
-				self.high = curr_high + (1 - self.upper_inclusive)
+				self.high = curr_high + (1 - self.high_inclusive)
 
 		return self
 
 	def sample(self, *size):
-		if self.upper_inclusive: 
+		if self.high_inclusive: 
 			return self._state.randint(self.low, self.high + 1, size=size)
 		return self._state.randint(self.low, self.high, size=size)
 
@@ -70,12 +70,12 @@ class DiscreteUniform(Discrete):
 		X = check_array(X, squeeze=True, dtype=int)
 
 		lb = self.low <= X
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			ub = self.high >= X
 		else:
 			ub = self.high > X
 
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			nrange = self.high - self.low
 		else:
 			nrange = (self.high - 1) - self.low
@@ -86,7 +86,7 @@ class DiscreteUniform(Discrete):
 		X = check_array(X, squeeze=True, dtype=int)
 
 		lb = self.low <= X 
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			ub = self.high >= X
 			nrange = self.high - self.low
 		else:
@@ -99,7 +99,7 @@ class DiscreteUniform(Discrete):
 		# check array for numpy structure
 		X = np.floor(check_array(X, squeeze=True, dtype=int))
 
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return np.clip((X - self.low) / (self.high - self.low), 0, 1)
 		return np.clip((X - self.low) / ((self.high - 1) - self.low), 0, 1)
 
@@ -111,13 +111,13 @@ class DiscreteUniform(Discrete):
 		# check array for numpy structure
 		q = check_array(q, squeeze=True)
 
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return self.low + q * (self.high - self.low)
 		return self.low + q * ((self.high - 1) - self.low)
 
 	@property
 	def mean(self):
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return 0.5 * (self.high - self.low) + self.low
 		return 0.5 * ((self.high - 1) - self.low) + self.low
 
@@ -131,7 +131,7 @@ class DiscreteUniform(Discrete):
 
 	@property
 	def variance(self):
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return (self.high - self.low) ** 2 / 12
 		return ((self.high - 1) - self.low) ** 2 / 12
 
@@ -145,7 +145,7 @@ class DiscreteUniform(Discrete):
 
 	@property
 	def entropy(self):
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return np.log(self.high - self.low)
 		return np.log((self.high - 1) - self.low)
 
@@ -155,7 +155,7 @@ class DiscreteUniform(Discrete):
 
 	@property
 	def support(self):
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return Interval(self.low, self.high, True, True)
 		return Interval(self.low, self.high, True, False)
 
@@ -164,7 +164,7 @@ class DiscreteUniform(Discrete):
 		self.high = None
 
 	def __str__(self):
-		return f"DiscreteUniform(low={self.low}, high={self.high - (1 - self.upper_inclusive)})"
+		return f"DiscreteUniform(low={self.low}, high={self.high - (1 - self.high_inclusive)})"
 
 	def __repr__(self):
 		return self.__str__()

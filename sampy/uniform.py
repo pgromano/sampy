@@ -5,7 +5,7 @@ from sampy.utils import check_array
 
 
 class Uniform(Continuous):
-	def __init__(self, low=0, high=1, upper_inclusive=True, seed=None):
+	def __init__(self, low=0, high=1, high_inclusive=True, seed=None):
 
 		if low > high:
 			err = f"Upper bounds (high) must be greater than low: {low} ≮ {high}"
@@ -16,7 +16,7 @@ class Uniform(Continuous):
 		
 		self.low = low
 		self.high = high
-		self.upper_inclusive = upper_inclusive
+		self.high_inclusive = high_inclusive
 		self.seed = seed
 		self._state = self._set_random_state(seed)
 
@@ -62,7 +62,7 @@ class Uniform(Continuous):
 		X = check_array(X, squeeze=True)
 
 		lb = self.low <= X
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			ub = self.high >= X
 		else:
 			ub = self.high > X
@@ -73,7 +73,7 @@ class Uniform(Continuous):
 		X = check_array(X, squeeze=True)
 
 		lb = self.low <= X 
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			ub = self.high >= X
 		else:
 			ub = self.high > X
@@ -135,7 +135,7 @@ class Uniform(Continuous):
 
 	@property
 	def support(self):
-		if self.upper_inclusive:
+		if self.high_inclusive:
 			return Interval(self.low, self.high, True, True)
 		return Interval(self.low, self.high, True, False)
 
