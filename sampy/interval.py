@@ -35,6 +35,16 @@ class Interval:
 		self.low_inclusive = low_inclusive
 		self.high_inclusive = high_inclusive
 
+	def below(self, X):
+		if self.low_inclusive:
+			return X < self.low
+		return X <= self.low
+
+	def above(self, X):
+		if self.high_inclusive:
+			return X > self.high
+		return X >= self.high
+
 	def contains(self, X):
 		""" Vectorized Check of Domain Containment
 
@@ -67,17 +77,13 @@ class Interval:
 			return np.logical_and(self.low < X, X < self.high)
 
 	# def __lt__(self, val):
-	# 	if self.low_inclusive:
-	# 		return self.low > val
-	# 	return self.low >= val
+	# 	return self.below(val)
 
 	# def __le__(self, val):
 	# 	return val.__gt__(self.high) or val in self
 
 	# def __gt__(self, val):
-	# 	if self.high_inclusive:
-	# 		return self.high < (val)
-	# 	return self.high <= (val)
+	# 	return self.above(val)
 
 	# def __ge__(self, val):
 	# 	return val.__lt__(self.low) or val in self
