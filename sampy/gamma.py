@@ -22,13 +22,67 @@ class Gamma(Continuous):
 
 	@classmethod
 	def from_data(self, X, seed=None):
-		raise NotImplementedError()
+		dist = Gamma(seed=seed)
+		return dist.fit(X)
 
 	def fit(self, X):
-		raise NotImplementedError()
+		self._reset()
+		return self.partial_fit(X)
 
 	def partial_fit(self, X):
-		raise NotImplementedError()
+		
+		# check array for numpy structure
+		X = check_array(X, squeeze=True)
+
+		# first fit
+		if not hasattr(self, '_n_samples'):
+			self._n_samples = 0
+
+		# update mean 
+		if self.shape is None and self.rate is None:
+			self._n_samples += X.shape[0] - np.isnan(X).sum()
+			self._mean = np.nanmean(X)
+			self._log_mean = np.nanmean(np.log(X))
+		else:
+			# previous values
+			prev_size = self._n_samples
+			prev_mean = self._mean
+			prev_log_mean = self._log_mean
+
+			# current values
+			curr_size = X.shape[0] - np.isnan(X).sum()
+			curr_mean = np.nanmean(X)
+			curr_log_mean = np.nanmean(np.log(X))
+
+			# update size
+			self._n_samples = prev_size + curr_size
+
+			# update mean
+			self._mean = ((prev_mean * prev_size) + \
+				(curr_mean * curr_size)) / self._n_samples
+
+			# update log-mean
+			self._log_mean = ((prev_log_mean * prev_size) + \
+				(curr_log_mean * curr_size)) / self._n_samples
+
+		# solving for shape parameter has no analytical closed form solution
+		# however shape is numerically well behaved and can be computed with 
+		# some level of numerical stability. Below we estimate parameter `s`
+		# which aids in the estimation of shape parameter `k`.
+		s = np.log(self._mean) - self._log_mean
+		k = (3 - s + np.sqrt((s - 3) * (s - 3) + 24 * s)) / (12 * s)
+
+		# this estimation of k is within 1.5% of correct value updated with 
+		# explicit form of Newton-Raphson
+		k -= (np.log(k) - sc.psi(k) - s) / ((1 / k) - sc.psi(k))
+
+		# solve for theta (theta = 1 / self.rate)
+		theta = self._mean / k
+		
+		# update parameters
+		self.shape = k
+		self.rate = 1 / theta
+		return self
 
 	def sample(self, *size):
 		return self._state.gamma(self.shape, 1 / self.rate, size=size)
@@ -111,6 +165,12 @@ class Gamma(Continuous):
 	@property
 	def support(self):
 		return Interval(0, np.inf, False, False)
+
+	def _reset(self):
+		if hasattr(self, '_n_samples'):
+			del self._n_samples
+		self.shape = None
+		self.rate = None
 
 	def __str__(self):
 		return f"Gamma(shape={self.shape}, rate={self.rate})"
