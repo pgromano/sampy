@@ -2,6 +2,7 @@ from .bernoulli import Bernoulli
 from .beta import Beta
 from .binomial import Binomial
 from .exponential import Exponential
+from .gamma import Gamma
 from .normal import Normal
 from .normal_half import HalfNormal
 from .poisson import Poisson
