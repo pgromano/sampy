@@ -6,7 +6,6 @@ import scipy.optimize as opt
 from sampy.distributions import Continuous
 from sampy.interval import Interval
 from sampy.utils import check_array
-from sampy.math import _handle_zeros_in_scale
 
 
 def _log_loss(params, mu, nu, n):
