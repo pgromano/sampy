@@ -31,7 +31,7 @@ class Gamma(Continuous):
 		raise NotImplementedError()
 
 	def sample(self, *size):
-		return self._state.gamma(self.shape, self.rate, size=size)
+		return self._state.gamma(self.shape, 1 / self.rate, size=size)
 
 	def pdf(self, *X):
 		# check array for numpy structure
@@ -55,7 +55,7 @@ class Gamma(Continuous):
 		# alias parameters
 		a, b = self.shape, self.rate
 
-		return sc.gammainc(a, b * X) / sc.gamma(a)
+		return sc.gammainc(a, b * X)
 
 	def log_cdf(self, *X):
 		# check array for numpy structure
@@ -70,7 +70,7 @@ class Gamma(Continuous):
 		# alias parameters
 		a, b = self.shape, self.rate
 
-		return sc.gammaincinv(a, b * q)
+		return sc.gammaincinv(a, q) / b
 
 	@property
 	def mean(self):
