@@ -37,7 +37,7 @@ class Beta(Continuous):
 
 	def partial_fit(self, X):
 
-			# check array for numpy structure
+		# check array for numpy structure
 		X = check_array(X, squeeze=True)
 
 		# check domain
