@@ -5,11 +5,20 @@ from sampy.gamma import Gamma
 from sampy.utils import check_array
 
 
-class Chi2(Gamma):
+class ChiSquared(Gamma):
 
 	def __init__(self, dof=1, seed=None):
 		self.dof = dof
-		super(Chi2, self).__init__(0.5 * dof, 0.5, seed=seed)
+		super(ChiSquared, self).__init__(0.5 * dof, 0.5, seed=seed)
+
+	def partial_fit(self, X):
+
+		# check array for numpy structure
+		X = check_array(X, squeeze=True)
+
+		super(ChiSquared, self).partial_fit(X)
+		self.dof = np.round(2 * self.shape).astype(int)
+		return self
 
 	@property
 	def mean(self):
