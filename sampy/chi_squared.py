@@ -14,7 +14,7 @@ class ChiSquared(Gamma):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		super(ChiSquared, self).partial_fit(X)
 		self.dof = np.round(2 * self.shape).astype(int)

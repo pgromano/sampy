@@ -32,7 +32,7 @@ class Uniform(Continuous):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# First fit
 		if self.low is None and self.high is None:
@@ -59,7 +59,7 @@ class Uniform(Continuous):
 
 	def pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		lb = self.low <= X
 		if self.high_inclusive:
@@ -70,7 +70,7 @@ class Uniform(Continuous):
 
 	def log_pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		lb = self.low <= X 
 		if self.high_inclusive:
@@ -81,7 +81,7 @@ class Uniform(Continuous):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return np.clip((X - self.low) / (self.high - self.low), 0, 1)
 
@@ -91,7 +91,7 @@ class Uniform(Continuous):
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		return self.low + q * (self.high - self.low)
 

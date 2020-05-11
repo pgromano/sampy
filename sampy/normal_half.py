@@ -25,7 +25,7 @@ class HalfNormal(Continuous):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# first fit
 		if not hasattr(self, '_n_samples'):
@@ -59,7 +59,7 @@ class HalfNormal(Continuous):
 
 	def pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		norm = np.sqrt(2) / (self.scale * np.sqrt(np.pi))
 		p = norm * np.exp(-X ** 2 / (2 * self.scale ** 2))
@@ -67,7 +67,7 @@ class HalfNormal(Continuous):
 
 	def log_pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		norm = np.log(np.sqrt(2)) - np.log(self.scale * np.sqrt(np.pi))
 		p = norm - (X ** 2 / (2 * self.variance))
@@ -75,7 +75,7 @@ class HalfNormal(Continuous):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return sc.erf(X / (np.sqrt(2) * self.scale))
 
@@ -85,7 +85,7 @@ class HalfNormal(Continuous):
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		return self.scale * np.sqrt(2) * sc.erfinv(q)
 

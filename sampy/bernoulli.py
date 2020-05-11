@@ -57,7 +57,7 @@ class Bernoulli(Discrete):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 		if X.dtype != int:
 			if self.invalid == 'error':
 				raise ValueError(
@@ -113,7 +113,7 @@ class Bernoulli(Discrete):
 
 	def pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		out = np.zeros(X.shape)
 		out[X == 0] = 1 - self.bias
@@ -122,13 +122,13 @@ class Bernoulli(Discrete):
 
 	def log_pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return np.log(self.pmf(X))
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		out = np.zeros(X.shape)
 		out[np.logical_or(X == 0, X == 1)] = 1 - self.bias
@@ -137,13 +137,13 @@ class Bernoulli(Discrete):
 
 	def log_cdf(self, X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return np.log(self.cdf(X))
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		out = np.ceil(sc.bdtrik(q, 1, self.bias))
 		return np.where(self.bias >= q, 0, out)

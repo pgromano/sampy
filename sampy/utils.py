@@ -3,12 +3,12 @@ import numpy as np
 
 __all__ = [
 	'check_array',
-	'Interval'
 ]
 
 
-def check_array(X, squeeze=False, dtype=None):
-	"""[summary]
+def check_array(X, ensure_1d=False, ensure_2d=False, squeeze=False, 
+				atleast_2d=False, reduce_args=False, dtype=None):
+	""" Check Array
 
 	Parameters
 	----------
@@ -23,20 +23,41 @@ def check_array(X, squeeze=False, dtype=None):
 	numpy.ndarray
 		The cleaned data as a numpy.ndarray
 	"""
-	try:
-		X = np.asscalar(X)
-		if dtype is None:
-			return X
-		return X.astype(dtype)
-	except:
-		if squeeze:
-			X = np.squeeze(X)
-		else:
-			X = np.asarray(X)
-		
-		if dtype is None:
-			return X
-		return X.astype(dtype)
+
+	if ensure_1d and ensure_2d:
+		raise ValueError("Cannot ensure 1D and 2D array")
+
+	if ensure_1d and atleast_2d:
+		raise ValueError("Ambiguous expectation: ensure_1d and atleast_2d")
+	
+	if squeeze and atleast_2d:
+		raise ValueError("Ambiguous expectation: squeeze and atleast_2d")
+
+	if reduce_args:
+		if len(X) == 1:
+			X = X[0]
+
+		if not hasattr(X, '__iter__') or isinstance(X, str):
+			X = np.array([X])
+		elif hasattr(X, '__iter__') and not isinstance(X, str):
+			X = np.array(X)
+
+	if hasattr(X, '__iter__') and not isinstance(X, str) and not isinstance(X, np.ndarray):
+		X = np.array(X)
+
+	if squeeze:
+		X = np.squeeze(X)
+
+	if atleast_2d and np.ndim(X) == 1:
+		X = np.atleast_2d(X).T
+
+	if ensure_1d and np.ndim(X) != 1:
+		raise ValueError("Array must be 1D")
+
+	if ensure_2d and np.ndim(X) != 2:
+		raise ValueError("Array must be 2D")
+
+	return X
 
 
 def set_random_state(self, seed=None):

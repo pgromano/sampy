@@ -38,7 +38,7 @@ class Beta(Continuous):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# check domain
 		if (1 - self.support.contains(X).sum() > 0):
@@ -121,7 +121,7 @@ class Beta(Continuous):
 
 	def pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		norm = sc.beta(self.alpha, self.beta)
 		p = np.power(X, self.alpha - 1) * np.power(1 - X, self.beta - 1)
@@ -129,7 +129,7 @@ class Beta(Continuous):
 
 	def log_pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		norm = sc.betaln(self.alpha, self.beta)
 		p = (self.alpha - 1) * np.log(X) + (self.beta - 1) * np.log(1 - X)
@@ -137,19 +137,19 @@ class Beta(Continuous):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return sc.btdtr(self.alpha, self.beta, X)
 
 	def log_cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 		
 		return np.log(self.cdf(X))
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 		
 		return sc.btdtri(self.alpha, self.beta, q)
 

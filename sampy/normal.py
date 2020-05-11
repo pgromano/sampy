@@ -26,7 +26,7 @@ class Normal(Continuous):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# first fit
 		if not hasattr(self, '_n_samples'):
@@ -67,14 +67,14 @@ class Normal(Continuous):
 
 	def pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		norm = (self.scale * np.sqrt(2 * np.pi))
 		return np.exp(-0.5 * ((X - self.center) / self.scale) ** 2) / norm
 
 	def log_pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		norm = 2 * self.variance
 		log_scale = np.log(self.scale) + np.log(np.sqrt(2 * np.pi))
@@ -82,7 +82,7 @@ class Normal(Continuous):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return 0.5 * (1 + sc.erf((X - self.center) / (np.sqrt(2) * self.scale)))
 
@@ -92,7 +92,7 @@ class Normal(Continuous):
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		return self.center + self.scale * sc.erfinv(2 * q - 1) * np.sqrt(2)
 

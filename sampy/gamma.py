@@ -32,7 +32,7 @@ class Gamma(Continuous):
 	def partial_fit(self, X):
 		
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# first fit
 		if not hasattr(self, '_n_samples'):
@@ -89,13 +89,13 @@ class Gamma(Continuous):
 
 	def pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return np.exp(self.log_pdf(X))
 
 	def log_pdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# alias parameters
 		a, b = self.shape, self.rate
@@ -104,7 +104,7 @@ class Gamma(Continuous):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# alias parameters
 		a, b = self.shape, self.rate
@@ -113,13 +113,13 @@ class Gamma(Continuous):
 
 	def log_cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return np.log(self.cdf(X))
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		# alias parameters
 		a, b = self.shape, self.rate

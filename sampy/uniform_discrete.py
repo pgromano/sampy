@@ -43,7 +43,7 @@ class DiscreteUniform(Discrete):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True, dtype=int)
+		X = check_array(X, reduce_args=True, ensure_1d=True, dtype=int)
 
 		# First fit
 		if self.low is None and self.high is None:
@@ -67,7 +67,7 @@ class DiscreteUniform(Discrete):
 
 	def pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True, dtype=int)
+		X = check_array(X, reduce_args=True, ensure_1d=True, dtype=int)
 
 		lb = self.low <= X
 		if self.high_inclusive:
@@ -83,7 +83,7 @@ class DiscreteUniform(Discrete):
 
 	def log_pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True, dtype=int)
+		X = check_array(X, reduce_args=True, ensure_1d=True, dtype=int)
 
 		lb = self.low <= X 
 		if self.high_inclusive:
@@ -97,7 +97,7 @@ class DiscreteUniform(Discrete):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = np.floor(check_array(X, squeeze=True, dtype=int))
+		X = np.floor(check_array(X, reduce_args=True, ensure_1d=True, dtype=int))
 
 		if self.high_inclusive:
 			return np.clip((X - self.low) / (self.high - self.low), 0, 1)
@@ -109,7 +109,7 @@ class DiscreteUniform(Discrete):
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		if self.high_inclusive:
 			return self.low + q * (self.high - self.low)

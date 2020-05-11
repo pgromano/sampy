@@ -25,7 +25,7 @@ class Poisson(Discrete):
 	def partial_fit(self, X):
 
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# first fit
 		if not hasattr(self, '_n_samples'):
@@ -62,13 +62,13 @@ class Poisson(Discrete):
 
 	def log_pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		return (np.log(self.rate) * X) - self.rate - sc.gammaln(X + 1)
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 		
 		return sc.pdtr(np.floor(X), self.rate)
 
@@ -77,7 +77,7 @@ class Poisson(Discrete):
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		vals = np.ceil(sc.pdtrik(q, self.rate))
 		vals1 = np.maximum(vals - 1, 0)

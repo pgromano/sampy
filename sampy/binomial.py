@@ -40,7 +40,7 @@ class Binomial(Discrete):
 
 	def partial_fit(self, X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True).astype(float)
+		X = check_array(X, reduce_args=True, ensure_1d=True).astype(float)
 
 		# identify values outside of support 
 		# NOTE: we don't know the "true" upper bounds so we only
@@ -87,12 +87,12 @@ class Binomial(Discrete):
 
 	def pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 		return np.exp(self.log_pmf(X))
 
 	def log_pmf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 		
 		# Floor values of X
 		X = np.floor(X)
@@ -105,7 +105,7 @@ class Binomial(Discrete):
 
 	def cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 
 		# floor X values
 		X = np.floor(X)
@@ -114,13 +114,13 @@ class Binomial(Discrete):
 
 	def log_cdf(self, *X):
 		# check array for numpy structure
-		X = check_array(X, squeeze=True)
+		X = check_array(X, reduce_args=True, ensure_1d=True)
 		
 		return np.log(self.cdf(X))
 
 	def quantile(self, *q):
 		# check array for numpy structure
-		q = check_array(q, squeeze=True)
+		q = check_array(q, reduce_args=True, ensure_1d=True)
 
 		vals = np.ceil(sc.bdtrik(q, self.n_trials, self.bias))
 		vals1 = np.maximum(vals - 1, 0)
