@@ -7,7 +7,8 @@ __all__ = [
 
 
 def check_array(X, ensure_1d=False, ensure_2d=False, squeeze=False, 
-				atleast_2d=False, reduce_args=False, dtype=None):
+				atleast_2d=False, feature_axis='col', reduce_args=False, 
+				dtype=None):
 	""" Check Array
 
 	Parameters
@@ -49,7 +50,13 @@ def check_array(X, ensure_1d=False, ensure_2d=False, squeeze=False,
 		X = np.squeeze(X)
 
 	if atleast_2d and np.ndim(X) == 1:
-		X = np.atleast_2d(X).T
+		if feature_axis == 'row' or feature_axis == 0:
+			X = np.atleast_2d(X)
+		elif feature_axis == 'col' or feature_axis == 1:
+			X = np.atleast_2d(X).T
+		else:
+			raise ValueError(
+				f"Unable to intepret `feature_axis = '{feature_axis}'`")
 
 	if ensure_1d and np.ndim(X) != 1:
 		raise ValueError("Array must be 1D")
@@ -60,7 +67,7 @@ def check_array(X, ensure_1d=False, ensure_2d=False, squeeze=False,
 	return X
 
 
-def set_random_state(self, seed=None):
+def set_random_state(seed=None):
 	if isinstance(seed, np.random.RandomState):
 		return seed
 
