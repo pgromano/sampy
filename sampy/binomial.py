@@ -12,7 +12,7 @@ class Binomial(Discrete):
 	def __init__(self, n_trials=1, bias=0.5, seed=None):
 
 		# safety check n_trials
-		if (n_trials, float):
+		if isinstance(n_trials, float):
 			warning.warn("Number of trials should be an integer. Casting to int")
 
 		if np.round(n_trials).astype(int) != n_trials:
