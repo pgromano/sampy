@@ -13,7 +13,7 @@ class Binomial(Discrete):
 
 		# safety check n_trials
 		if isinstance(n_trials, float):
-			warning.warn("Number of trials should be an integer. Casting to int")
+			warnings.warn("Number of trials should be an integer. Casting to int")
 
 		if np.round(n_trials).astype(int) != n_trials:
 			raise ValueError("Number of trials must be an integer value")
