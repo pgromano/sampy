@@ -23,5 +23,13 @@ def _handle_zeros_in_scale(scale, copy=True):
 		return
 
 
-def logn(X, base=10):
+def logn(X, base):
 	return np.log(X) / np.log(base)
+
+
+def nanlog(X):
+	return np.where(X == 0, 0, np.log(X))
+
+
+def nanlogn(X, base):
+	return np.where(X == 0, 0, logn(X, base))
