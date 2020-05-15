@@ -76,17 +76,36 @@ class Interval:
 		elif not self.low_inclusive and not self.high_inclusive:
 			return np.logical_and(self.low < X, X < self.high)
 
-	# def __lt__(self, val):
-	# 	return self.below(val)
+	def not_contains(self, X):
+		""" Vectorized Check of Domain Non-Containment
 
-	# def __le__(self, val):
-	# 	return val.__gt__(self.high) or val in self
+		This method is similar to use of the `in` operator (e.g. 
+		`5 in Interval()`) however is implemented to vectorize across array-like
+		objects. 
 
-	# def __gt__(self, val):
-	# 	return self.above(val)
+		Parameters
+		----------
+		X : numeric or array-like
+			The individual or container of values to be evaluated. 
 
-	# def __ge__(self, val):
-	# 	return val.__lt__(self.low) or val in self
+		Returns
+		-------
+		bool or array of bool
+			A boolean value of whether or not the values in X are within the
+			given support domain. If a numeric value (int or float) then a 
+			single bool is returned. If an array-like object is passed, then
+			a numpy.ndarray of type bool is returned with each value 
+			representing elementwise values.
+		"""
+
+		if self.low_inclusive and self.high_inclusive:
+			return np.logical_and(self.low >= X, X >= self.high)
+		elif self.low_inclusive and not self.high_inclusive:
+			return np.logical_and(self.low >= X, X > self.high)
+		elif not self.low_inclusive and self.high_inclusive:
+			return np.logical_and(self.low > X, X >= self.high)
+		elif not self.low_inclusive and not self.high_inclusive:
+			return np.logical_and(self.low > X, X > self.high)
 
 	def __contains__(self, val):
 
