@@ -1,6 +1,7 @@
 from .bernoulli import Bernoulli
 from .beta import Beta
 from .binomial import Binomial
+from .binomial_negative import NegativeBinomial
 from .chi_squared import ChiSquared
 from .exponential import Exponential
 from .gamma import Gamma
