@@ -127,10 +127,20 @@ class Binomial(Discrete):
         # check array for numpy structure
         q = check_array(q, reduce_args=True, ensure_1d=True)
 
-        vals = np.ceil(sc.bdtrik(q, self.n_trials, self.bias))
-        vals1 = np.maximum(vals - 1, 0)
-        temp = sc.bdtr(vals1, self.n_trials, self.bias)
-        return np.where(temp >= q, vals1, vals).astype(int)
+        # get the upper value of X (ceiling)
+        X_up = np.ceil(sc.bdtrik(q, self.n_trials, self.bias))
+
+        # get the lower value of X (floor)
+        X_down = np.maximum(X_up - 1, 0)
+
+        # recompute quantiles to validate transformation
+        q_test = sc.bdtr(X_down, self.n_trials, self.bias)
+
+        # when q_test is greater than true, shift output down
+        out = np.where(q_test >= q, X_down, X_up).astype(int)
+
+        # return only in-bound values
+        return np.where(self.support.contains(out), out, np.nan)
 
     @property
     def mean(self):
@@ -170,6 +180,7 @@ class Binomial(Discrete):
     @cache_property
     def support(self):
         return Interval(0, self.n_trials, True, True)
+
     def _reset(self):
         if hasattr(self, "_n_samples"):
             del self._n_samples
@@ -183,4 +194,3 @@ class Binomial(Discrete):
 
     def __repr__(self):
         return self.__str__()
-
