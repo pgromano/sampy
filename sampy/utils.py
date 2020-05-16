@@ -3,6 +3,8 @@ import numpy as np
 
 __all__ = [
 	'check_array',
+	'set_random_state',
+	'cache_property',
 ]
 
 
@@ -75,3 +77,18 @@ def set_random_state(seed=None):
 		seed = hash(seed) & ((1 << 32) - 1)
 
 	return np.random.RandomState(seed)
+
+
+
+class cache_property:
+	def __init__(self, method):
+		self.method = method
+		self.cache_name = "_{}".format(method.__name__)
+
+	def __get__(self, instance, *args, **kwargs):
+		
+		if hasattr(instance, self.cache_name):
+			return getattr(instance, self.cache_name)
+		setattr(instance, self.cache_name, self.method(instance))
+		return getattr(instance, self.cache_name)
+
