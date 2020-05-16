@@ -148,7 +148,7 @@ class Binomial(Discrete):
 
     @property
     def median(self):
-        return self.quantile(0.5)
+        return self.quantile(0.5)[0]
 
     @property
     def mode(self):
