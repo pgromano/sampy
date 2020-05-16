@@ -94,6 +94,38 @@ class NegativeBinomial(Discrete):
         # return only in-bound values
         return np.where(self.support.contains(out), out, np.nan)
 
+    @property
+    def n_fail(self):
+        return self.n_success * ((1 / self.bias) - 1)
+
+    @property
+    def mean(self):
+        return (self.bias * self.n_fail) / (1 - self.bias)
+
+    @property
+    def median(self):
+        return self.quantile(0.5)[0]
+
+    @property
+    def mode(self):
+        if self.n_fail <= 1:
+            return 0
+        return np.floor((self.bias * (self.n_fail - 1)) / (1 - self.bias))
+
+    @property
+    def variance(self):
+        return self.bias * self.n_fail / ((1 - self.bias) * (1 - self.bias))
+
+    @property
+    def skewness(self):
+        return (1 + self.bias) / np.sqrt(self.bias * self.n_fail)
+
+    @property
+    def kurtosis(self):
+        return 6 / self.n_fail + (
+            (1 - self.bias) * (1 - self.bias) / (self.bias * self.n_fail)
+        )
+
     @cache_property
     def support(self):
         return Interval(0, np.inf, True, False)
