@@ -2,7 +2,7 @@ import numpy as np
 import scipy.special as sc
 
 from sampy.gamma import Gamma
-from sampy.utils import check_array
+from sampy.utils import check_array, cache_property
 
 
 class ChiSquared(Gamma):
@@ -54,7 +54,7 @@ class ChiSquared(Gamma):
 	def perplexity(self):
 		return np.exp(self.entropy)
 
-	@property
+	@cache_property
 	def support(self):
 		if self.dof == 1:
 			return Interval(0, np.inf, False, False)

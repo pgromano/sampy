@@ -3,7 +3,7 @@ import scipy.special as sc
 import warnings
 
 from sampy.interval import Interval
-from sampy.utils import check_array
+from sampy.utils import check_array, cache_property
 
 
 class Multinomial:
@@ -84,7 +84,7 @@ class Multinomial:
 	def perplexity(self):
 		raise NotImplementedError
 
-	@property
+	@cache_property
 	def support(self):
 		return Interval(0, self.n_trials, True, True)
 

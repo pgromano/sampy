@@ -1,7 +1,7 @@
 import numpy as np
 
 from sampy.distributions import Continuous
-from sampy.utils import check_array
+from sampy.utils import check_array, cache_property
 
 
 class Uniform(Continuous):
@@ -133,7 +133,7 @@ class Uniform(Continuous):
 	def perplexity(self):
 		return np.exp(self.entropy)
 
-	@property
+	@cache_property
 	def support(self):
 		if self.high_inclusive:
 			return Interval(self.low, self.high, True, True)

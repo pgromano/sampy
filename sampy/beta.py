@@ -5,7 +5,7 @@ import scipy.optimize as opt
 
 from sampy.distributions import Continuous
 from sampy.interval import Interval
-from sampy.utils import check_array
+from sampy.utils import check_array, cache_property
 
 
 def _log_loss(params, mu, nu, n):
@@ -204,7 +204,7 @@ class Beta(Continuous):
 	def perplexity(self):
 		return np.exp(self.entropy)
 
-	@property
+	@cache_property
 	def support(self):
 		return Interval(0, 1, True, True)
 

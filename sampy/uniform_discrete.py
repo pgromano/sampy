@@ -2,7 +2,7 @@ import numpy as np
 
 from sampy.distributions import Discrete
 from sampy.interval import Interval
-from sampy.utils import check_array
+from sampy.utils import check_array, cache_property
 
 
 class DiscreteUniform(Discrete):
@@ -153,7 +153,7 @@ class DiscreteUniform(Discrete):
 	def perplexity(self):
 		return np.exp(self.entropy)
 
-	@property
+	@cache_property
 	def support(self):
 		if self.high_inclusive:
 			return Interval(self.low, self.high, True, True)

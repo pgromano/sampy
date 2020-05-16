@@ -4,7 +4,7 @@ import scipy.special as sc
 
 from sampy.distributions import Discrete
 from sampy.interval import Interval
-from sampy.utils import check_array
+from sampy.utils import check_array, cache_property
 from sampy.math import _handle_zeros_in_scale
 
 
@@ -184,7 +184,7 @@ class Bernoulli(Discrete):
 	def perplexity(self):
 		return np.exp(self.entropy)
 
-	@property
+	@cache_property
 	def support(self):
 		return Interval(0, 1, True, True)
 
