@@ -47,14 +47,71 @@ class Bernoulli(Discrete):
 
     @classmethod
     def from_data(self, X, invalid="error", seed=None):
+        """Initialize distribution from data
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+        invalid : str, {'error', 'warn', 'ignore'}
+            How the fit method should handle out of domain errors or other invalid
+            values. On 'error' the method will return ValueError and end. On 'warn'
+            a warning will notify the user of the issue and actions taken to 
+            mitigate. On 'ignore' the user is neither informed nor does the code
+            error out, proceed with caution.
+        seed : int, str or None, optional
+            The seed by which to set the random number generator for the 
+            `sample` method, by default None. A seed set to None will use the
+            default clock time (see numpy.random.RandomState for more details)
+            and an integer will set the seed directly. Strings will be hashed to 
+            an integer representation which can be a helpful description of the 
+            distribution use or associated experiment. 
+
+        Returns
+        -------
+        sampy.Bernoulli
+            The fitted Bernoulli distribution model 
+        """
+
         dist = Bernoulli(invalid=invalid, seed=seed)
         return dist.fit(X)
 
     def fit(self, X):
+        """Fit model to data
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+
+        Returns
+        -------
+        sampy.Bernoulli
+            The fitted Bernoulli distribution model
+        """
+
         self._reset()
         return self.partial_fit(X)
 
     def partial_fit(self, X):
+        """Incremental fit on a batch of samples
+
+        Parameters are updated using a method of moments estimation. The bias
+        parameter can be estimated from the empirical mean sampled data.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+
+        Returns
+        -------
+        sampy.Bernoulli
+            The fitted Bernoulli distribution model
+        """
 
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
@@ -110,39 +167,192 @@ class Bernoulli(Discrete):
         return self
 
     def sample(self, *size):
+        """Sample random variables from the given distribution
+
+        Parameters
+        ----------
+        size : int
+            The size by axis dimension to sample from the distribution. Each
+            size argument passed implies increasing number of dimensions of the
+            output.
+
+        Returns
+        -------
+        numpy.ndarray
+            The sampled values from the distribution returned with the given
+            size provided.
+        """
+
         return self._state.binomial(1, self.bias, size=size)
 
     def pmf(self, *X):
+        """Probability Mass Function
+
+        The probability mass function for the Bernoulli distribution is given
+        by two cases. 
+
+        .. math::
+            \begin{cases}
+                1-p  &\text{if } X = 0\\
+                p    &\text{if } X = 1
+            \end{cases}
+
+        where `p` is the :code:`bias` in favor of a positive event
+
+        Parameters
+        ----------
+        X : numpy.ndarray, int
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output probability mass reported elementwise with respect to the
+            input data.
+        """
+
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        out = np.zeros(X.shape)
-        out[X == 0] = 1 - self.bias
-        out[X == 1] = self.bias
+        # probability mass
+        out = np.where(X == 1, self.bias, 1 - self.bias)
+
+        # check bounds
+        out = np.where(self.support.contains(out), out, np.nan)
         return out
 
     def log_pmf(self, *X):
+        """Log Probability Mass Function
+
+        The probability mass function for the Bernoulli distribution is given
+        by two cases. 
+
+        .. math::
+            \begin{cases}
+                1-p  &\text{if } X = 0\\
+                p    &\text{if } X = 1
+            \end{cases}
+
+        where `p` is the :code:`bias` in favor of a positive event
+
+        Parameters
+        ----------
+        X : numpy.ndarray, int
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output log transformed probability mass reported elementwise 
+            with respect to the input data.
+        """
+
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
         return np.log(self.pmf(X))
 
     def cdf(self, *X):
+        """Cumulative Distribution Function
+
+        The cumulative distribution function for the Bernoulli distribution is 
+        given by three cases. 
+
+        .. math::
+            \begin{cases}
+                0      &\text{if } X \leq 0
+                1 - p  &\text{if } 0 \leq X \lt 1\\
+                1      &\text{if } X \geq 1
+            \end{cases}
+
+        where `p` is the :code:`bias` in favor of a positive event
+
+        Parameters
+        ----------
+        X : numpy.ndarray, int
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output cumulative distribution reported elementwise with respect to 
+            the input data.
+        """
+
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        out = np.zeros(X.shape)
-        out[np.logical_or(X == 0, X == 1)] = 1 - self.bias
-        out[X > 1] = 1
+        # when X in bounds: 1 - p, else 0
+        out = np.where(self.support.contains(X), 1 - self.bias, 0)
+
+        # when X >= 1 then 1
+        out = np.where(X >= 1, 1, out)
         return out
 
     def log_cdf(self, X):
+        """Log Cumulative Distribution Function
+
+        The cumulative distribution function for the Bernoulli distribution is 
+        given by three cases. 
+
+        .. math::
+            \begin{cases}
+                0      &\text{if } X \leq 0
+                1 - p  &\text{if } 0 \leq X \lt 1\\
+                1      &\text{if } X \geq 1
+            \end{cases}
+
+        where `p` is the :code:`bias` in favor of a positive event
+
+        Parameters
+        ----------
+        X : numpy.ndarray, int
+            1D dataset which falls within the domain of the given distribution
+            support. The Bernoulli distribution expects series of 0 or 1 only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output log transformed cumulative distribution reported elementwise
+            with respect to the input data.
+        """
+
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
         return np.log(self.cdf(X))
 
     def quantile(self, *q):
+        """Quantile Function
+
+        Also known as the inverse cumulative Distribution function, this function
+        takes known quantiles and returns the associated `X` value from the 
+        support domain.
+
+        .. math::
+            \begin{cases}
+                0      &\text{if } 0 \leq q \lt p
+                1      &\text{if } p \leq q \lt 1
+            \end{cases}
+
+        Parameters
+        ----------
+        q : numpy.ndarray, float
+            The probabilities within domain [0, 1]
+
+        Returns
+        -------
+        numpy.ndarray
+            The `X` values from the support domain associated with the input
+            quantiles.
+        """
         # check array for numpy structure
         q = check_array(q, reduce_args=True, ensure_1d=True)
 
@@ -155,12 +365,12 @@ class Bernoulli(Discrete):
 
     @property
     def median(self):
-        if self.bias == 0.5:
-            return np.nan
-        return np.round(self.bias)
+        return self.quantile(0.5)[0]
 
     @property
     def mode(self):
+        if self.bias == 0.5:
+            return np.nan
         return self.median
 
     @property
@@ -200,4 +410,3 @@ class Bernoulli(Discrete):
 
     def __repr__(self):
         return self.__str__()
-
