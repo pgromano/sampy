@@ -1,4 +1,4 @@
 theme: jekyll-theme-minimal
 title: sampy
 description: Sampling with Python
-logo: https://github.com/pgromano/sampy/tree/master/docs/img/logo_64x64.png
+logo: /docs/img/logo_64x64.png
