@@ -4,11 +4,33 @@ import warnings
 
 from sampy.distributions import Discrete
 from sampy.interval import Interval
-from sampy.utils import check_array, cache_property
-from sampy.math import logn, _handle_zeros_in_scale
+from sampy.utils import check_array, is_scalar, cache_property
+from sampy.math import nanlog, logn
 
 
 class Binomial(Discrete):
+    """ Binomial Distribution
+
+	This distribution describes the likelihood of returning a number of positive
+    results (e.g. heads, yes, etc.)  from a fixed number of trials with a given 
+    probability (or bias) of an individual positive event.
+
+	Parameters
+	----------
+    n_trials : int, optional
+        The number of independent Bernoulli trials with boolean outcome.
+	bias : float, optional
+		The bias or the likelihood of a positive event, by default 0.5. 
+		The values within this method assume that negative class will be 0
+		and positive class 1. 
+	seed : int, str or None, optional
+		The seed by which to set the random number generator for the 
+		`sample` method, by default None. A seed set to None will use the
+		default clock time (see numpy.random.RandomState for more details)
+		and an integer will set the seed directly. Strings will be hashed to an
+		integer representation which can be a helpful description of the 
+		distribution use or associated experiment. 
+	"""
     def __init__(self, n_trials=1, bias=0.5, seed=None):
 
         # safety check n_trials
@@ -31,14 +53,69 @@ class Binomial(Discrete):
 
     @classmethod
     def from_data(self, X, seed=None):
+        """Initialize distribution from data
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+        seed : int, str or None, optional
+            The seed by which to set the random number generator for the 
+            `sample` method, by default None. A seed set to None will use the
+            default clock time (see numpy.random.RandomState for more details)
+            and an integer will set the seed directly. Strings will be hashed to 
+            an integer representation which can be a helpful description of the 
+            distribution use or associated experiment. 
+
+        Returns
+        -------
+        sampy.Binomial
+            The fitted Binomial distribution model 
+        """
         dist = Binomial(seed=seed)
         return dist.fit(X)
 
     def fit(self, X):
+        """Fit model to data
+
+        This method fits the paramters for number of trials and bias by using
+        method of moments estimation. The mean and variance of the provided data 
+        are used to evaluated the most likely parameters.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+
+        Returns
+        -------
+        sampy.Binomial
+            The fitted Binomial distribution model
+        """
         self._reset()
         return self.partial_fit(X)
 
     def partial_fit(self, X):
+        """Incremental fit on a batch of samples
+
+        This method partially fits (i.e. updates previous fits to new batch 
+        data) the paramters for number of trials and bias by using method of 
+        moments estimation. The mean and variance of the provided data are used 
+        to evaluated the most likely parameters.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+
+        Returns
+        -------
+        sampy.Binomial
+            The fitted Binomial distribution model
+        """
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True).astype(float)
 
@@ -85,14 +162,101 @@ class Binomial(Discrete):
         return self
 
     def sample(self, *size):
+        """Sample random variables from the given distribution
+
+        Parameters
+        ----------
+        size : int
+            The size by axis dimension to sample from the distribution. Each
+            size argument passed implies increasing number of dimensions of the
+            output.
+
+        Returns
+        -------
+        numpy.ndarray
+            The sampled values from the distribution returned with the given
+            size provided.
+        """
         return self._state.binomial(self.n_trials, self.bias, size=size)
 
     def pmf(self, *X):
+        """Probability Mass Function
+
+        The probability mass function for the Binomial distribution is given
+        by the following function
+
+        .. math::
+            {n \choose X} p^X q^{n - X}
+
+        where `n` is the number of independent trials (:code:`n_trials`), `p`
+        the bias (:code:`bias`) in favor of a positive event, and `X` the number
+        of observed successes.
+
+        The choose notation can be expanded as shown below:
+
+        .. math::
+            {n \choose X} = \frac{n!}{X!(n - X)!}
+
+        Note that for numerical accuracy we use the **gamma** function for all
+        factorial representations:
+
+        .. math::
+            \Gamma(n) = (n - 1)!
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output probability mass reported elementwise with respect to the
+            input data.
+        """
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
         return np.exp(self.log_pmf(X))
 
     def log_pmf(self, *X):
+        """Log Probability Mass Function
+
+        The probability mass function for the Binomial distribution is given
+        by the following function
+
+        .. math::
+            {n \choose X} p^X q^{n - X}
+
+        where `n` is the number of independent trials (:code:`n_trials`), `p`
+        the bias (:code:`bias`) in favor of a positive event, and `X` the number
+        of observed successes.
+
+        The choose notation can be expanded as shown below:
+
+        .. math::
+            {n \choose X} = \frac{n!}{X!(n - X)!}
+
+        Note that for numerical accuracy we use the **gamma** function for all
+        factorial representations:
+
+        .. math::
+            \Gamma(n) = (n - 1)!
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output log-transformed probability mass reported elementwise 
+            with respect to the input data.
+        """
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
@@ -109,6 +273,31 @@ class Binomial(Discrete):
         return out
 
     def cdf(self, *X):
+        """Cumulative Distribution Function
+
+        The cumulative distribution function for the Binomial distribution is 
+        given below. 
+
+        .. math::
+            (n - X) {n \choose X} \int_0^{1 - p} t^{n - X - 1}(1 - t)^X dt
+
+        where `n` is the number of independent trials (:code:`n_trials`), `p`
+        the bias (:code:`bias`) in favor of a positive event, and `X` the number
+        of observed successes.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output cumulative distribution reported elementwise with respect
+            to the input data.
+        """
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
@@ -118,12 +307,66 @@ class Binomial(Discrete):
         return sc.bdtr(X, self.n_trials, self.bias)
 
     def log_cdf(self, *X):
+        """Log Cumulative Distribution Function
+
+        The cumulative distribution function for the Binomial distribution is 
+        given below. 
+
+        .. math::
+            (n - X) {n \choose X} \int_0^{1 - p} t^{n - X - 1}(1 - t)^X dt
+
+        where `n` is the number of independent trials (:code:`n_trials`), `p`
+        the bias (:code:`bias`) in favor of a positive event, and `X` the number
+        of observed successes.
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            1D dataset which falls within the domain of the given distribution
+            support. The Binomial distribution expects positive integers only.
+            This value is often denoted `k` in the literature.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output log-transformed cumulative distribution reported 
+            elementwise with respect to the input data.
+        """
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
         return np.log(self.cdf(X))
 
     def quantile(self, *q):
+        """Quantile Function
+
+        Also known as the inverse cumulative distribution function, this 
+        function takes known quantiles and returns the associated `X` value from 
+        the support domain.
+
+        The quantiles function is given by the incomplete beta function
+
+        .. math::
+            I_q(a, b) = \frac{1}{B(a, b)} \int_0^q t^{a - 1}(1 - t)^{b - 1} dt
+
+        This method uses the scipy's bdtrik (a wrapper for the FORTRAN 
+        subroutine cdfbin) to reduce the binomial distribution to the cumulative 
+        incomplete beta function. The equation is given below
+
+        .. math::
+            \sum_{s=a}^{n} p^a (1 - p)^{n - a} = I_p(a, n-a+1)
+
+        Parameters
+        ----------
+        q : numpy.ndarray, float
+            The probabilities within domain [0, 1]
+
+        Returns
+        -------
+        numpy.ndarray
+            The `X` values from the support domain associated with the input
+            quantiles.
+        """
         # check array for numpy structure
         q = check_array(q, reduce_args=True, ensure_1d=True)
 
