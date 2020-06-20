@@ -4,8 +4,13 @@ import warnings
 
 from sampy.distributions import Discrete
 from sampy.interval import Interval
-from sampy.utils import check_array, is_scalar, cache_property
+from sampy.utils import check_array, cache_property, get_param_permutations, reduce_shape
 from sampy.math import nanlog, logn
+
+
+__all__ = [
+    'Binomial'
+]
 
 
 class Binomial(Discrete):
@@ -31,6 +36,13 @@ class Binomial(Discrete):
 		integer representation which can be a helpful description of the 
 		distribution use or associated experiment. 
 	"""
+    
+    __slots__ = {
+        'n_trials': 'Number of Bernoulli trials', 
+        'bias': 'Bias in favor of positive event', 
+        'seed': 'Random number generator seed'
+    }
+
     def __init__(self, n_trials=1, bias=0.5, seed=None):
 
         # safety check n_trials
@@ -179,7 +191,7 @@ class Binomial(Discrete):
         """
         return self._state.binomial(self.n_trials, self.bias, size=size)
 
-    def pmf(self, *X):
+    def pmf(self, *X, n_trials=None, bias=None, keepdims=False):
         """Probability Mass Function
 
         The probability mass function for the Binomial distribution is given
@@ -209,6 +221,16 @@ class Binomial(Discrete):
             1D dataset which falls within the domain of the given distribution
             support. The Binomial distribution expects positive integers only.
             This value is often denoted `k` in the literature.
+        n_trials : int, optional
+            The number of independent Bernoulli trials with boolean outcome.
+        bias : float, optional
+            The bias or the likelihood of a positive event, by default 0.5. 
+            The values within this method assume that negative class will be 0
+            and positive class 1. 
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the input array.
 
         Returns
         -------
@@ -218,9 +240,9 @@ class Binomial(Discrete):
         """
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
-        return np.exp(self.log_pmf(X))
+        return np.exp(self.log_pmf(X, n_trials=n_trials, bias=bias, keepdims=keepdims))
 
-    def log_pmf(self, *X):
+    def log_pmf(self, *X, n_trials=None, bias=None, keepdims=False):
         """Log Probability Mass Function
 
         The probability mass function for the Binomial distribution is given
@@ -250,6 +272,16 @@ class Binomial(Discrete):
             1D dataset which falls within the domain of the given distribution
             support. The Binomial distribution expects positive integers only.
             This value is often denoted `k` in the literature.
+        n_trials : int, optional
+            The number of independent Bernoulli trials with boolean outcome.
+        bias : float, optional
+            The bias or the likelihood of a positive event, by default 0.5. 
+            The values within this method assume that negative class will be 0
+            and positive class 1. 
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the input array.
 
         Returns
         -------
@@ -257,22 +289,35 @@ class Binomial(Discrete):
             The output log-transformed probability mass reported elementwise 
             with respect to the input data.
         """
+
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
+
+        # get n_trials
+        if n_trials is None:
+            n_trials = self.n_trials
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        # create grid for multi-paramter search
+        X, n_trials, bias, shape = get_param_permutations(X, n_trials, bias, return_shape=True)
 
         # Floor values of X
         X = np.floor(X)
 
         # Expand all components of log-pmf
         out = (
-            sc.gammaln(self.n_trials + 1)
-            - (sc.gammaln(X + 1) + sc.gammaln(self.n_trials - X + 1))
-            + sc.xlogy(X, self.bias)
-            + sc.xlog1py(self.n_trials - X, -self.bias)
+            sc.gammaln(n_trials + 1)
+            - (sc.gammaln(X + 1) + sc.gammaln(n_trials - X + 1))
+            + sc.xlogy(X, bias)
+            + sc.xlog1py(n_trials - X, -bias)
         )
-        return out
+        
+        return reduce_shape(out, shape, keepdims)
 
-    def cdf(self, *X):
+    def cdf(self, *X, n_trials=None, bias=None, keepdims=False):
         """Cumulative Distribution Function
 
         The cumulative distribution function for the Binomial distribution is 
@@ -291,6 +336,16 @@ class Binomial(Discrete):
             1D dataset which falls within the domain of the given distribution
             support. The Binomial distribution expects positive integers only.
             This value is often denoted `k` in the literature.
+        n_trials : int, optional
+            The number of independent Bernoulli trials with boolean outcome.
+        bias : float, optional
+            The bias or the likelihood of a positive event, by default 0.5. 
+            The values within this method assume that negative class will be 0
+            and positive class 1. 
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the input array.
 
         Returns
         -------
@@ -301,12 +356,26 @@ class Binomial(Discrete):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
+        # get n_trials
+        if n_trials is None:
+            n_trials = self.n_trials
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        # create grid for multi-paramter search
+        X, n_trials, bias, shape = get_param_permutations(X, n_trials, bias, return_shape=True)
+
         # floor X values
         X = np.floor(X)
 
-        return sc.bdtr(X, self.n_trials, self.bias)
+        # get output
+        out = sc.bdtr(X, n_trials, bias)
 
-    def log_cdf(self, *X):
+        return reduce_shape(out, shape, keepdims)
+
+    def log_cdf(self, *X, n_trials=None, bias=None, keepdims=False):
         """Log Cumulative Distribution Function
 
         The cumulative distribution function for the Binomial distribution is 
@@ -325,6 +394,16 @@ class Binomial(Discrete):
             1D dataset which falls within the domain of the given distribution
             support. The Binomial distribution expects positive integers only.
             This value is often denoted `k` in the literature.
+        n_trials : int, optional
+            The number of independent Bernoulli trials with boolean outcome.
+        bias : float, optional
+            The bias or the likelihood of a positive event, by default 0.5. 
+            The values within this method assume that negative class will be 0
+            and positive class 1. 
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the input array.
 
         Returns
         -------
@@ -335,9 +414,10 @@ class Binomial(Discrete):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        return np.log(self.cdf(X))
+        out = np.log(self.cdf(X, n_trials=n_trials, bias=bias, keepdims=keepdims))
+        return out
 
-    def quantile(self, *q):
+    def quantile(self, *q, n_trials=None, bias=None, keepdims=False):
         """Quantile Function
 
         Also known as the inverse cumulative distribution function, this 
@@ -370,55 +450,108 @@ class Binomial(Discrete):
         # check array for numpy structure
         q = check_array(q, reduce_args=True, ensure_1d=True)
 
+        # get n_trials
+        if n_trials is None:
+            n_trials = self.n_trials
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        # create grid for multi-paramter search
+        q, n_trials, bias, shape = get_param_permutations(q, n_trials, bias, return_shape=True)
+
         # get the upper value of X (ceiling)
-        X_up = np.ceil(sc.bdtrik(q, self.n_trials, self.bias))
+        X_up = np.ceil(sc.bdtrik(q, n_trials, bias))
 
         # get the lower value of X (floor)
         X_down = np.maximum(X_up - 1, 0)
 
         # recompute quantiles to validate transformation
-        q_test = sc.bdtr(X_down, self.n_trials, self.bias)
+        q_test = sc.bdtr(X_down, n_trials, bias)
 
         # when q_test is greater than true, shift output down
         out = np.where(q_test >= q, X_down, X_up).astype(int)
 
         # return only in-bound values
-        return np.where(self.support.contains(out), out, np.nan)
+        in_bounds = np.logical_and(out >= 0, out <= n_trials)
+        out = np.where(in_bounds, out, np.nan)
 
-    @property
-    def mean(self):
-        return self.n_trials * self.bias
+        return reduce_shape(out, shape, keepdims)
 
-    @property
-    def median(self):
-        return self.quantile(0.5)[0]
+    def mean(self, n_trials=None, bias=None, keepdims=False):
+        if n_trials is None:
+            n_trials = self.n_trials
 
-    @property
-    def mode(self):
-        return self.median
+        if bias is None:
+            bias = self.bias
 
-    @property
-    def variance(self):
-        return self.n_trials * self.bias * (1 - self.bias)
+        n_trials, bias, shape = get_param_permutations(
+            n_trials, bias, return_shape=True)
+        return reduce_shape(n_trials * bias, shape, keepdims)
 
-    @property
-    def skewness(self):
-        n, p, q = self.n_trials, self.bias, 1 - self.bias
-        return (q - p) / np.sqrt(n * p * q)
+    def median(self, n_trials=None, bias=None, keepdims=False):
+        return self.quantile(
+            0.5, n_trials=n_trials, bias=bias, keepdims=keepdims)
 
-    @property
-    def kurtosis(self):
-        n, p, q = self.n_trials, self.bias, 1 - self.bias
-        return (1 - (6 * p * q)) / (n * p * q)
+    def mode(self, n_trials=None, bias=None, keepdims=False):
+        return self.median(n_trials, bias, keepdims)
 
-    @property
-    def entropy(self):
-        n, p, q = self.n_trials, self.bias, 1 - self.bias
-        return 0.5 * logn(2 * np.pi * np.exp(1) * n * p * q, 2)
+    def variance(self, n_trials=None, bias=None, keepdims=False):
+        if n_trials is None:
+            n_trials = self.n_trials
 
-    @property
-    def perplexity(self):
-        return np.exp(self.entropy)
+        if bias is None:
+            bias = self.bias
+
+        n_trials, bias, shape = get_param_permutations(
+            n_trials, bias, return_shape=True)
+        return reduce_shape(
+            n_trials * bias * (1 - bias), shape, keepdims)
+
+    def skewness(self, n_trials=None, bias=None, keepdims=False):
+        if n_trials is None:
+            n_trials = self.n_trials
+
+        if bias is None:
+            bias = self.bias
+
+        n_trials, bias, shape = get_param_permutations(
+            n_trials, bias, return_shape=True)
+        n, p, q = n_trials, bias, 1 - bias
+        return reduce_shape(
+            (q - p) / np.sqrt(n * p * q), shape, keepdims)
+
+    def kurtosis(self, n_trials=None, bias=None, keepdims=False):
+        if n_trials is None:
+            n_trials = self.n_trials
+
+        if bias is None:
+            bias = self.bias
+
+        n_trials, bias, shape = get_param_permutations(
+            n_trials, bias, return_shape=True)
+
+        n, p, q = n_trials, bias, 1 - bias
+        return reduce_shape(
+            (1 - (6 * p * q)) / (n * p * q), shape, keepdims)
+
+    def entropy(self, n_trials=None, bias=None, keepdims=False):
+        if n_trials is None:
+            n_trials = self.n_trials
+
+        if bias is None:
+            bias = self.bias
+
+        n_trials, bias, shape = get_param_permutations(
+            n_trials, bias, return_shape=True)
+
+        n, p, q = n_trials, bias, 1 - bias
+        return reduce_shape(
+            0.5 * logn(2 * np.pi * np.exp(1) * n * p * q, 2), shape, keepdims)
+
+    def perplexity(self, n_trials=None, bias=None, keepdims=False):
+        return np.exp(self.entropy(n_trials, bias, keepdims))
 
     @cache_property
     def support(self):
