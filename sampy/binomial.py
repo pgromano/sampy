@@ -8,9 +8,7 @@ from sampy.utils import check_array, cache_property, get_param_permutations, red
 from sampy.math import nanlog, logn
 
 
-__all__ = [
-    'Binomial'
-]
+__all__ = ['Binomial']
 
 
 class Binomial(Discrete):
