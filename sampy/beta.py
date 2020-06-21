@@ -5,7 +5,10 @@ import scipy.optimize as opt
 
 from sampy.distributions import Continuous
 from sampy.interval import Interval
-from sampy.utils import check_array, cache_property
+from sampy.utils import check_array, cache_property, get_param_permutations, reduce_shape
+
+
+__all__ = ['Beta']
 
 
 def _log_loss(params, mu, nu, n):
@@ -19,6 +22,14 @@ def _log_loss(params, mu, nu, n):
 
 
 class Beta(Continuous):
+
+    __slots__ = {
+        'alpha': 'alpha parameter',
+        'beta': 'beta parameter',
+        'fit_raise': 'whether or not to raise error on failed fit convergence',
+        'seed': 'seed'
+    }
+
     def __init__(self, alpha=1, beta=1, fit_raise="error", seed=None):
         self.alpha = alpha
         self.beta = beta
@@ -124,90 +135,206 @@ class Beta(Continuous):
     def sample(self, *size):
         return self._state.beta(self.alpha, self.beta, size=size)
 
-    def pdf(self, *X):
+    def pdf(self, *X, alpha=None, beta=None, keepdims=False):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        norm = sc.beta(self.alpha, self.beta)
-        p = np.power(X, self.alpha - 1) * np.power(1 - X, self.beta - 1)
-        return p / norm
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
 
-    def log_pdf(self, *X):
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        X, alpha, beta, shape = get_param_permutations(X, alpha, beta, return_shape=True)
+
+        norm = sc.beta(alpha, beta)
+        p = np.power(X, alpha - 1) * np.power(1 - X, beta - 1)
+        return reduce_shape(p / norm, shape, keepdims)
+
+    def log_pdf(self, *X, alpha=None, beta=None, keepdims=False):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        norm = sc.betaln(self.alpha, self.beta)
-        p = (self.alpha - 1) * np.log(X) + (self.beta - 1) * np.log(1 - X)
-        return p - norm
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
 
-    def cdf(self, *X):
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        X, alpha, beta, shape = get_param_permutations(X, alpha, beta, return_shape=True)
+
+        norm = sc.betaln(alpha, beta)
+        p = (alpha - 1) * np.log(X) + (beta - 1) * np.log(1 - X)
+        return reduce_shape(p - norm, shape, keepdims)
+
+    def cdf(self, *X, alpha=None, beta=None, keepdims=False):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        return sc.btdtr(self.alpha, self.beta, X)
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
 
-    def log_cdf(self, *X):
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        X, alpha, beta, shape = get_param_permutations(X, alpha, beta, return_shape=True)
+
+        out = sc.btdtr(alpha, beta, X)
+        return reduce_shape(out, shape, keepdims)
+
+    def log_cdf(self, *X, alpha=None, beta=None, keepdims=False):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        return np.log(self.cdf(X))
+        return np.log(self.cdf(X, alpha=alpha, beta=beta, keepdims=keepdims))
 
-    def quantile(self, *q):
+    def quantile(self, *q, alpha=None, beta=None, keepdims=False):
         # check array for numpy structure
         q = check_array(q, reduce_args=True, ensure_1d=True)
 
-        return sc.btdtri(self.alpha, self.beta, q)
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
 
-    @property
-    def mean(self):
-        return self.alpha / (self.alpha + self.beta)
+        # get bias
+        if beta is None:
+            beta = self.beta
 
-    @property
-    def median(self):
-        return self.quantile(0.5)[0]
+        # create grid for multi-paramter search
+        q, alpha, beta, shape = get_param_permutations(q, alpha, beta, return_shape=True)
 
-    @property
-    def mode(self):
-        a, b = self.alpha, self.beta
-        if a < 1 and b < 1:
-            return np.nan
-        elif a <= 1 and b > 1:
-            return 0
-        elif a > 1 and b <= 1:
-            return 1
-        return (a - 1) / (a + b - 2)
+        out = sc.btdtri(alpha, beta, q)
+        return reduce_shape(out, shape, keepdims)
 
-    @property
-    def variance(self):
-        a, b = self.alpha, self.beta
-        return (a * b) / ((a + b) * (a + b) * (a + b + 1))
+    def mean(self, alpha=None, beta=None, keepdims=False):
 
-    @property
-    def skewness(self):
-        a, b = self.alpha, self.beta
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
+
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        alpha, beta, shape = get_param_permutations(alpha, beta, return_shape=True)
+
+        return reduce_shape(alpha / (alpha + beta), shape, keepdims)
+
+    def median(self, alpha=None, beta=None, keepdims=False):
+        return self.quantile(0.5, alpha=alpha, beta=beta, keepdims=keepdims)
+
+    def mode(self, alpha=None, beta=None, keepdims=False):
+
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
+
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        alpha, beta, shape = get_param_permutations(alpha, beta, return_shape=True)
+
+        # alpha > 1 and beta > 1
+        out = (alpha - 1) / (alpha - beta - 2)
+
+        # alpha < 1 and beta < 1
+        out = np.where(np.logical_and(alpha < 1, beta < 1), np.nan, out)
+
+        # alpha <= 1 and beta > 1
+        out = np.where(np.logical_and(alpha <= 1, beta > 1), 0, out)
+
+        # alpha > 1 and beta <= 1
+        out = np.where(np.logical_and(alpha > 1, beta <= 1), 1, out)
+
+        return reduce_shape(out, shape, keepdims)
+
+    def variance(self, alpha=None, beta=None, keepdims=False):
+
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
+
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        alpha, beta, shape = get_param_permutations(alpha, beta, return_shape=True)
+        a, b = alpha, beta
+
+        # output variance
+        out = (a * b) / ((a + b) * (a + b) * (a + b + 1))
+        return reduce_shape(out, shape, keepdims)
+
+    def skewness(self, alpha=None, beta=None, keepdims=False):
+
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
+
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        alpha, beta, shape = get_param_permutations(alpha, beta, return_shape=True)
+        a, b = alpha, beta
 
         norm = (a + b + 2) * np.sqrt(a * b)
         out = 2 * (b - a) * np.sqrt(a + b + 1)
-        return out / norm
+        return reduce_shape(out / norm, shape, keepdims)
 
-    @property
-    def kurtosis(self):
-        a, b = self.alpha, self.beta
+    def kurtosis(self, alpha=None, beta=None, keepdims=False):
+
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
+
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        alpha, beta, shape = get_param_permutations(alpha, beta, return_shape=True)
+        a, b = alpha, beta
+
         norm = a * b * (a + b + 2) * (a + b + 3)
-        out = 6 * [(a + b) * (a + b) * (a + b + 1) - a * b * (a + b + 2)]
-        return out / norm
+        out = 6 * ((a + b) * (a + b) * (a + b + 1) - a * b * (a + b + 2))
+        return reduce_shape(out / norm, shape, keepdims)
 
-    @property
-    def entropy(self):
-        a, b = self.alpha, self.beta
+    def entropy(self, alpha=None, beta=None, keepdims=False):
+
+        # get alpha
+        if alpha is None:
+            alpha = self.alpha
+
+        # get bias
+        if beta is None:
+            beta = self.beta
+
+        # create grid for multi-paramter search
+        alpha, beta, shape = get_param_permutations(alpha, beta, return_shape=True)
+        a, b = alpha, beta
+
         out = sc.betaln(a, b) - (a - 1) * sc.digamma(a)
         out -= (b - 1) * sc.digamma(b)
         out += (a + b - 2) * sc.digamma(a + b)
-        return out
+        return reduce_shape(out, shape, keepdims)
 
-    @property
-    def perplexity(self):
-        return np.exp(self.entropy)
+    def perplexity(self, alpha=None, beta=None, keepdims=False):
+        return np.exp(self.entropy(alpha, beta, keepdims))
 
     @cache_property
     def support(self):
