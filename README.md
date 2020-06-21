@@ -10,7 +10,7 @@
 pip install sampy
 ```
 
-# Generic API
+# Distribution API
 
 Every distribution method in `sampy` initializes with the only the most 
 immediate parameters for the distribution and a seed. Take the example of the 
@@ -94,3 +94,27 @@ model = sampy.Normal.from_data(X, seed='Example of from_data class method')
 **Note**: Both `from_data` and `fit` are identical in implementation that they 
 clear the distribution of any pre-defined parameters. The `from_data` method can 
 be beneficial in cases when parameters have no prior estimate.
+
+# Functional API
+
+While having fixed or frozen parameters is beneficial for some use-cases, often 
+times there's a need for evaluating data across multiple parameter permutations. 
+The functional API includes a vectorized implementation to efficiently calcualte
+probabilities, CDF, and quantiles across a range of values.
+
+```python
+import numpy as np
+import sampy
+
+X = np.arange(11)
+n_trials = np.arange(11)
+bias = np.linspace(0, 1, 101)
+
+# initialize distribution
+binomial = sampy.Binomial()
+
+# compute distribution
+prob = binomial.pmf(X, n_trials, bias)
+prob.shape
+>>> (11, 101, 101)
+```
