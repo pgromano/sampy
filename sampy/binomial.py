@@ -471,9 +471,12 @@ class Binomial(Discrete):
         # when q_test is greater than true, shift output down
         out = np.where(q_test >= q, X_down, X_up).astype(int)
 
-        # return only in-bound values
-        in_bounds = np.logical_and(out >= 0, out <= n_trials)
-        out = np.where(in_bounds, out, np.nan)
+        # boundary test
+        out = np.where(q == 1, 1, out)
+
+        # out of bounds
+        out_bounds = np.logical_or(q < 0, q > 1)
+        out = np.where(out_bounds, np.nan, out)
 
         return reduce_shape(out, shape, keepdims)
 

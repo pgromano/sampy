@@ -173,7 +173,7 @@ class Bernoulli(Discrete):
 
         return self._state.binomial(1, self.bias, size=size)
 
-    def pmf(self, *X):
+    def pmf(self, *X, bias=None, keepdims=False):
         """Probability Mass Function
 
         The probability mass function for the Bernoulli distribution is given
@@ -193,6 +193,14 @@ class Bernoulli(Discrete):
             1D dataset which falls within the domain of the given distribution
             support. The Bernoulli distribution expects series of 0 or 1 only.
             This value is often denoted `k` in the literature.
+        bias : float, optional
+            The bias or the likelihood of a positive event, by default 0.5. 
+            The values within this method assume that negative class will be 0
+            and positive class 1.
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the input array.
 
         Returns
         -------
@@ -204,14 +212,22 @@ class Bernoulli(Discrete):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        # create grid for multi-paramter search
+        X, bias, shape = get_param_permutations(X, bias, return_shape=True)
+
         # probability mass
-        out = np.where(X == 1, self.bias, 1 - self.bias)
+        out = np.where(X == 1, bias, 1 - bias)
 
         # check bounds
-        out = np.where(self.support.contains(out), out, np.nan)
-        return out
+        in_bounds = np.logical_and(out >= 0, out <= 1)
+        out = np.where(in_bounds, out, np.nan)
+        return reduce_shape(out, shape, keepdims)
 
-    def log_pmf(self, *X):
+    def log_pmf(self, *X, bias=None, keepdims=False):
         """Log Probability Mass Function
 
         The probability mass function for the Bernoulli distribution is given
@@ -242,9 +258,9 @@ class Bernoulli(Discrete):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        return np.log(self.pmf(X))
+        return np.log(self.pmf(X, bias=bias, keepdims=keepdims))
 
-    def cdf(self, *X):
+    def cdf(self, *X, bias=None, keepdims=False):
         """Cumulative Distribution Function
 
         The cumulative distribution function for the Bernoulli distribution is 
@@ -276,14 +292,22 @@ class Bernoulli(Discrete):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        # create grid for multi-paramter search
+        X, bias, shape = get_param_permutations(X, bias, return_shape=True)
+
         # when X in bounds: 1 - p, else 0
-        out = np.where(self.support.contains(X), 1 - self.bias, 0)
+        in_bounds = np.logical_and(X >= 0, X <= 1)
+        out = np.where(in_bounds, 1 - bias, 0)
 
         # when X >= 1 then 1
         out = np.where(X >= 1, 1, out)
-        return out
+        return reduce_shape(out, shape, keepdims)
 
-    def log_cdf(self, X):
+    def log_cdf(self, *X, bias=None, keepdims=False):
         """Log Cumulative Distribution Function
 
         The cumulative distribution function for the Bernoulli distribution is 
@@ -315,9 +339,9 @@ class Bernoulli(Discrete):
         # check array for numpy structure
         X = check_array(X, reduce_args=True, ensure_1d=True)
 
-        return np.log(self.cdf(X))
+        return np.log(self.cdf(X, bias=bias, keepdims=keepdims))
 
-    def quantile(self, *q):
+    def quantile(self, *q, bias=None, keepdims=False):
         """Quantile Function
 
         Also known as the inverse cumulative distribution function, this function
@@ -344,45 +368,105 @@ class Bernoulli(Discrete):
         # check array for numpy structure
         q = check_array(q, reduce_args=True, ensure_1d=True)
 
-        out = np.ceil(sc.bdtrik(q, 1, self.bias))
-        return np.where(self.bias >= q, 0, out)
+        # get bias
+        if bias is None:
+            bias = self.bias
 
-    @property
-    def mean(self):
-        return self.bias
+        # create grid for multi-paramter search
+        q, bias, shape = get_param_permutations(q, bias, return_shape=True)
 
-    @property
-    def median(self):
-        return self.quantile(0.5)[0]
+        # get the upper value of X (ceiling)
+        X_up = np.ceil(sc.bdtrik(q, 1, bias))
 
-    @property
-    def mode(self):
-        if self.bias == 0.5:
-            return np.nan
-        return self.median
+        # get the lower value of X (floor)
+        X_down = np.maximum(X_up - 1, 0)
 
-    @property
-    def variance(self):
-        return self.bias * (1 - self.bias)
+        # recompute quantiles to validate transformation
+        q_test = sc.bdtr(X_down, 1, bias)
 
-    @property
-    def skewness(self):
-        p, q = self.bias, 1 - self.bias
+        # when q_test is greater than true, shift output down
+        out = np.where(q_test >= q, X_down, X_up).astype(int)
+
+        # boundary test
+        out = np.where(q == 1, 1, out)
+
+        # out of bounds
+        out_bounds = np.logical_or(q < 0, q > 1)
+        out = np.where(out_bounds, np.nan, out)
+
+        return reduce_shape(out, shape, keepdims)
+
+    def mean(self, bias=None):
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        return bias
+
+    def median(self, bias=None):
+        return self.quantile(0.5, bias=bias, keepdims=False)
+
+    def mode(self, bias=None):
+        # get bias
+        if bias is None:
+            bias = self.bias
+
+        out = self.median(bias, keepdims)
+        return np.where(out == 0.5, np.nan, out)
+
+    def variance(self, bias=None):
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+        else:
+            bias = check_array(bias, ensure_1d=True)
+
+        return bias * (1 - bias)
+
+    def skewness(self, bias=None):
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+        else:
+            bias = check_array(bias, ensure_1d=True)
+
+        p, q = bias, 1 - bias
         return (q - p) / np.sqrt(p * q)
 
-    @property
-    def kurtosis(self):
-        p, q = self.bias, 1 - self.bias
+    def kurtosis(self, bias=None):
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+        else:
+            bias = check_array(bias, ensure_1d=True)
+
+        p, q = bias, 1 - bias
         return (1 - 6 * p * q) / (p * q)
 
-    @property
-    def entropy(self):
-        p, q = self.bias, 1 - self.bias
+    def entropy(self, bias=None):
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+        else:
+            bias = check_array(bias, ensure_1d=True)
+
+        p, q = bias, 1 - bias
         return -q * np.log(q) - p * np.log(p)
 
-    @property
-    def perplexity(self):
-        return np.exp(self.entropy)
+    def perplexity(self, bias=None):
+
+        # get bias
+        if bias is None:
+            bias = self.bias
+        else:
+            bias = check_array(bias, ensure_1d=True)
+
+        return np.exp(self.entropy(bias))
 
     @cache_property
     def support(self):
@@ -398,182 +482,3 @@ class Bernoulli(Discrete):
 
     def __repr__(self):
         return self.__str__()
-
-
-def _create_permutations(X, bias):
-    grid = np.meshgrid(X, bias, indexing='ij')
-    X = grid[0].ravel()
-    bias = grid[1].ravel()
-    return X, bias, grid[0].shape
-
-
-def pmf(X, bias, return_log=False, keepdims=False):
-    """Probability Mass Function
-
-    The probability mass function for the Bernoulli distribution is given
-    by two cases. 
-
-    .. math::
-        \begin{cases}
-            1-p  &\text{if } X = 0\\
-            p    &\text{if } X = 1
-        \end{cases}
-
-    where `p` is the :code:`bias` in favor of a positive event
-
-    Parameters
-    ----------
-    X : numpy.ndarray, int
-        1D dataset which falls within the domain of the given distribution
-        support. The Bernoulli distribution expects series of 0 or 1 only.
-        This value is often denoted `k` in the literature.
-    bias : float, optional
-        The bias or the likelihood of a positive event, by default 0.5. 
-        The values within this method assume that negative class will be 0
-        and positive class 1. 
-    return_log : bool, optional
-        Whether or not to return the log-transform
-    keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the input array.
-
-    Returns
-    -------
-    numpy.ndarray
-        The output probability mass reported elementwise with respect to the
-        input data.
-    """
-
-    # check array for numpy structure
-    X, bias, shape = _create_permutations(X, bias)
-
-    # probability mass
-    out = np.where(X == 1, bias, 1 - bias)
-
-    # check bounds
-    out = np.where(out > 1, out, np.nan)
-
-    if return_log:
-        out = np.log(out)
-    out = out.reshape(shape)
-
-    if not keepdims:
-        out = out.squeeze()
-
-    if out.size == 1:
-        return np.asscalar(out)
-    return out
-
-
-def cdf(X, bias, return_log=False, keepdims=False):
-    """Cumulative Distribution Function
-
-    The cumulative distribution function for the Bernoulli distribution is 
-    given by three cases. 
-
-    .. math::
-        \begin{cases}
-            0      &\text{if } X \leq 0
-            1 - p  &\text{if } 0 \leq X \lt 1\\
-            1      &\text{if } X \geq 1
-        \end{cases}
-
-    where `p` is the :code:`bias` in favor of a positive event
-
-    Parameters
-    ----------
-    X : numpy.ndarray, int
-        1D dataset which falls within the domain of the given distribution
-        support. The Bernoulli distribution expects series of 0 or 1 only.
-        This value is often denoted `k` in the literature.
-    bias : float, optional
-        The bias or the likelihood of a positive event, by default 0.5. 
-        The values within this method assume that negative class will be 0
-        and positive class 1. 
-    return_log : bool, optional
-        Whether or not to return the log-transform
-    keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the input array.
-
-    Returns
-    -------
-    numpy.ndarray
-        The output probability mass reported elementwise with respect to the
-        input data.
-    """
-
-    # check array for numpy structure
-    X, bias, shape = _create_permutations(X, bias)
-
-    # when X in bounds: 1 - p, else 0
-    in_bounds = np.logical_and(out <= 1, out >= 0)
-    out = np.where(in_bounds, 1 - bias, 0)
-
-    # when X >= 1 then 1
-    out = np.where(X >= 1, 1, out)
-    return out
-
-    if return_log:
-        out = np.log(out)
-    out = out.reshape(shape)
-
-    if not keepdims:
-        out = out.squeeze()
-
-    if out.size == 1:
-        return np.asscalar(out)
-    return out
-
-
-def quantile(self, q, bias, return_log=False, keepdims=False):
-    """Quantile Function
-
-    Also known as the inverse cumulative distribution function, this function
-    takes known quantiles and returns the associated `X` value from the 
-    support domain.
-
-    .. math::
-        \begin{cases}
-            0      &\text{if } 0 \leq q \lt p
-            1      &\text{if } p \leq q \lt 1
-        \end{cases}
-
-    Parameters
-    ----------
-    q : numpy.ndarray, float
-        The probabilities within domain [0, 1]
-    bias : float, optional
-        The bias or the likelihood of a positive event, by default 0.5. 
-        The values within this method assume that negative class will be 0
-        and positive class 1. 
-    return_log : bool, optional
-        Whether or not to return the log-transform
-    keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the input array.
-
-    Returns
-    -------
-    numpy.ndarray
-        The `X` values from the support domain associated with the input
-        quantiles.
-    """
-    # check array for numpy structure
-    q, bias, shape = _create_permutations(q, bias)
-
-    # compute incomplete beta function
-    out = np.ceil(sc.bdtrik(q, 1, bias))
-
-    # filter bounds 
-    out = np.where(bias >= q, 0, out)
-
-    if not keepdims:
-        out = out.squeeze()
-
-    if out.size == 1:
-        return np.asscalar(out)
-    return out
